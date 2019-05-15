@@ -74,9 +74,10 @@ _xmsgs/
 #ISim genetrated folder
 isim/
 *_beh.exe
-*_beh.wdb
+*.wdb
 fuse._xmsgs
 fuse.log
+fuse.xmsgs
 fuseRelaunch.cmd
 isim.cmd
 isim.log
