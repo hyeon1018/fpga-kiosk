@@ -54,7 +54,7 @@ architecture Behavioral of seven_segment is
 	signal seg_clk : STD_LOGIC;
 	signal bcd : STD_LOGIC_VECTOR(3 downto 0);
 	signal en : STD_LOGIC_VECTOR(6 downto 0);
-	signal select_t : STD_LOGIC_VECTOR(5 downto 0);
+	signal select_t : STD_LOGIC_VECTOR(5 downto 0) := "000001";
 begin
 	--check empty space;
 	en(6) <= '0';
@@ -65,15 +65,14 @@ begin
 	en(0) <= '1';
 
 	--select generate
-	U_SEG_CLK_DIV : clock_divider
-						 generic map(10000)
+	U_SEG_CLK_DIV : clock_divider generic map(10000)
 						 port map(clk, '0', seg_clk);
 						 
-	select_generate : process(rst, clk)
+	select_generate : process(rst, seg_clk)
 	begin
 		if rst = '1' then
 			select_t <= "000001";
-		elsif rising_edge(clk) then
+		elsif rising_edge(seg_clk) then
 			select_t <= select_t(4 downto 0) & select_t(5);
 		end if;
 	end process;

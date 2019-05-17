@@ -30,3 +30,13 @@ NET segment_sel<3> LOC = B6;
 NET segment_sel<2> LOC = E7;
 NET segment_sel<1> LOC = D7;
 NET segment_sel<0> LOC = B7;
+
+//debuging led;
+NET debug_led<7> LOC = N3;
+NET debug_led<6> LOC = N2;
+NET debug_led<5> LOC = N1;
+NET debug_led<4> LOC = M6;
+NET debug_led<3> LOC = M5;
+NET debug_led<2> LOC = M4;
+NET debug_led<1> LOC = M3;
+NET debug_led<0> LOC = M2;
