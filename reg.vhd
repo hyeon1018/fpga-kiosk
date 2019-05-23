@@ -30,7 +30,7 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity reg is
-	Generic ( size : integer := 8 );
+	Generic ( size : integer );
    Port ( clk : in  STD_LOGIC;
 			 rst : in  STD_LOGIC;
 			 load_en : in  STD_LOGIC;
@@ -44,7 +44,7 @@ begin
 	process (clk, rst)
 	begin
 		if rst = '1' then
-			data <= (others => '0');
+			out_data <= (others => '0');
 		elsif load_en = '1' and rising_edge(clk) then
 			out_data <= load_data;
 		end if;

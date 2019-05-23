@@ -57,12 +57,22 @@ component seven_segment is
            segment_select : out  STD_LOGIC_VECTOR (5 downto 0));
 end component;
 
+component state_selector is
+    Port ( clk : in  STD_LOGIC;
+			  rst : in  STD_LOGIC;
+           update : in  STD_LOGIC;
+           key_data : in  STD_LOGIC_VECTOR (3 downto 0);
+           key_event : in  STD_LOGIC;
+           enable_state : out  STD_LOGIC_VECTOR (7 downto 0);
+           state : out  STD_LOGIC_VECTOR (2 downto 0));
+end component;
+
 signal price : STD_LOGIC_VECTOR(23 downto 0);
 signal key_data : STD_LOGIC_VECTOR(3 downto 0);
 signal key_event : STD_LOGIC;
-signal led_out_t : STD_LOGIC_VECTOR(7 downto 0) := "10000000";
---test.
-signal updown : STD_LOGIC_VECTOR(3 downto 0) := "0000";
+
+signal state_select : STD_LOGIC_VECTOR(7 downto 0);
+signal kiosk_state : STD_LOGIC_VECTOR(2 downto 0);
 
 begin 
 
@@ -70,25 +80,9 @@ U_KPD : Key_Matrix port map (clk, '0', key_matrix_in, key_matrix_scan, key_data,
 
 U_7SEG : seven_segment port map(clk, '0', price, segment_data, segment_sel); 
 
---debugin
-process(key_event)
-begin
-	if falling_edge(key_event) then
-		if key_data = x"4" then
-			led_out_t <= led_out_t(6 downto 0) & led_out_t(7);
-		elsif key_data = x"6" then
-			led_out_t <= led_out_t(0) & led_out_t(7 downto 1);
-		elsif key_data = x"2" then
-			updown <= updown + 1;
-		elsif key_data = x"8" then
-			updown <= updown - 1;
-		end if;
-	end if;
-end process;
+U_STATE : state_selector port map(clk, '0', key_event, key_data, key_event, state_select, kiosk_state);
 
-debug_led <= led_out_t;
-price(23 downto 4) <= (others => '0');
-price(3 downto 0) <= updown;
+debug_led <= state_select;
 
 
 end Behavioral;
