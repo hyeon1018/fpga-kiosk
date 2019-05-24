@@ -2,13 +2,13 @@
 -- Company: 
 -- Engineer: 
 -- 
--- Create Date:    10:47:33 05/21/2019 
+-- Create Date:    13:04:50 05/24/2019 
 -- Design Name: 
--- Module Name:    ram_16x16 - Behavioral 
+-- Module Name:    memory_qu - Behavioral 
 -- Project Name: 
 -- Target Devices: 
 -- Tool versions: 
--- Description: 
+-- Description: memory module don't has empty space between data.
 --
 -- Dependencies: 
 --
@@ -30,16 +30,18 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 --library UNISIM;
 --use UNISIM.VComponents.all;
 
-entity ram_16x16 is
+entity memory_qu is
     Port ( clk : in  STD_LOGIC;
 			  rst : in  STD_LOGIC;
-           addr : in  STD_LOGIC_VECTOR (3 downto 0);
            load_en : in  STD_LOGIC;
            load_data : in  STD_LOGIC_VECTOR (15 downto 0);
+           delete_addr : in  STD_LOGIC_VECTOR (3 downto 0);
+           delete_en : in  STD_LOGIC;
+			  addr : in STD_LOGIC_VECTOR (3 downto 0);
            out_data : out  STD_LOGIC_VECTOR (15 downto 0));
-end ram_16x16;
+end memory_qu;
 
-architecture Behavioral of ram_16x16 is
+architecture Behavioral of memory_qu is
 
 component reg is
 	Generic ( size : integer);
@@ -50,20 +52,27 @@ component reg is
 			 out_data : out  STD_LOGIC_VECTOR (size-1 downto 0));
 end component;
 
-signal addr_en : STD_LOGIC_VECTOR (15 downto 0);
+signal get_prev : STD_LOGIC_VECTOR (16 downto 0);
 
-type data_array is array (15 downto 0) of std_logic_vector (15 downto 0);
+type data_array is array (16 downto 0) of STD_LOGIC_VECTOR (15 downto 0);
 signal reg_out : data_array;
-
+signal reg_in : data_array;
 
 begin
+	get_prev(0) <= '0';
 	regs : for K in 0 to 15 generate
-		addr_en(K) <= load_en when addr = K else
-						  '0';
+		get_prev(K+1) <= '1' when get_prev(K) = '1' or reg_out(K) = x"0000" else
+							  '0';
+		reg_in(K) <= reg_out(K+1) when get_prev(K+1) = '1' else
+						 x"0000" when delete_en = '1' and delete_addr = K else
+						 reg_out(K);
 		U_REG : reg generic map (16) 
-					 port map(clk, rst, addr_en(K), load_data, reg_out(K));
+					 port map(clk, rst, '1', reg_in(K), reg_out(K));
 	end generate;
+	reg_out(16) <= load_data when load_en = '1' else
+						x"0000";
 	
+	--set output.
 	with addr select out_data <=
 		reg_out(0) when "0000",
 		reg_out(1) when "0001",
@@ -80,7 +89,8 @@ begin
 		reg_out(12) when "1100",
 		reg_out(13) when "1101",
 		reg_out(14) when "1110",
-		reg_out(15) when "1111";
-
+		reg_out(15) when "1111",
+		x"0000" when others;
+		
 end Behavioral;
 
