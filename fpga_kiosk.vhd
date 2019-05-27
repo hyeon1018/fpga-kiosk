@@ -74,7 +74,15 @@ component reg is
 			 out_data : out  STD_LOGIC_VECTOR (size-1 downto 0));
 end component;
 
-signal price, price_t : STD_LOGIC_VECTOR(23 downto 0);
+component excess3_6 is
+    Port ( a : in  STD_LOGIC_VECTOR (23 downto 0);
+           b : in  STD_LOGIC_VECTOR (23 downto 0);
+           op : in  STD_LOGIC;
+           sum : out  STD_LOGIC_VECTOR (23 downto 0);
+           cout : out  STD_LOGIC);
+end component;
+
+signal price, price_t, price_add : STD_LOGIC_VECTOR(23 downto 0);
 signal key_data : STD_LOGIC_VECTOR(3 downto 0);
 signal key_event : STD_LOGIC;
 
@@ -82,6 +90,7 @@ signal kiosk_state : STD_LOGIC_VECTOR(2 downto 0);
 
 --test;
 signal test_out, test_out_t : STD_LOGIC_VECTOR(7 downto 0);
+signal alu_op : STD_LOGIC;
 
 begin 
 
@@ -95,15 +104,17 @@ U_STATE : state_selector port map(clk, '0', key_event, key_data, kiosk_state);
 U_PRICE_REG : reg
 					generic map (24)
 					port map (clk, '0', key_event, price_t, price);
+					
+T_EX3_ALU : excess3_6 port map(price, price_add, alu_op, price_t, open);
 
-price_t <=	price + 1 when key_data = x"3" else
-				price - 1 when key_data = x"9" else
-				price + x"10" when key_data = x"2" else
-				price - x"10" when key_data = x"8" else
-				price + x"100" when key_data = x"1" else
-				price - x"100" when key_data = x"7" else
-				price;				
+price_add <= 	x"333334" when key_data = x"3" or key_data = x"9" else
+					x"333343" when key_data = x"2" or key_data = x"8" else
+					x"333433" when key_data = x"1" or key_data = x"7" else
+					x"333333";
 
+alu_op <= 	'1' when key_data = x"7" or key_data = x"8" or key_data = x"9" else
+				'0';
+				
 
 U_TEST_REG : reg
 				 generic map (8)

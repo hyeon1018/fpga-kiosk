@@ -45,7 +45,7 @@ architecture Behavioral of seven_segment is
 				 clk_out : out  STD_LOGIC);
 	end component;
 	
-	component bcd_to_7seg is
+	component ex3_to_7seg is
     Port ( bcd_in : in  STD_LOGIC_VECTOR (3 downto 0);
            seg_out : out  STD_LOGIC_VECTOR (7 downto 0));
 	end component;
@@ -59,7 +59,7 @@ begin
 	--check empty space;
 	en(6) <= '0';
 	ENABLE : for K in 1 to 5 generate
-		en(K) <= '0' when en(K+1)='0' and bcd_input(4*k+3 downto 4*K) = "0000" else
+		en(K) <= '0' when en(K+1)='0' and bcd_input(4*k+3 downto 4*K) = "0011" else
 					'1';
 	end generate;
 	en(0) <= '1';
@@ -87,7 +87,7 @@ begin
 			 bcd_input(3 downto 0) when select_t = "000001" else
 			 "0000";
 	
-	U_BCD_SEG : bcd_to_7seg port map(bcd, segment_data);
+	U_BCD_SEG : ex3_to_7seg port map(bcd, segment_data);
 	
 end Behavioral;
 
