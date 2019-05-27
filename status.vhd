@@ -32,10 +32,8 @@ use IEEE.STD_LOGIC_1164.ALL;
 entity state_selector is
     Port ( clk : in  STD_LOGIC;
 			  rst : in  STD_LOGIC;
-           update : in  STD_LOGIC;
-           key_data : in  STD_LOGIC_VECTOR (3 downto 0);
            key_event : in  STD_LOGIC;
-           enable_state : out  STD_LOGIC_VECTOR (7 downto 0);
+           key_data : in  STD_LOGIC_VECTOR (3 downto 0);
            state : out  STD_LOGIC_VECTOR (2 downto 0));
 end state_selector;
 
@@ -60,20 +58,10 @@ begin
 	next_state <= "000" when current = "110" and key_data = "0100" else
 					  current;
 	
-	U_STATE : reg port map (clk, rst, update, next_state, current);
+	U_STATE_REG : reg port map (clk, rst, key_event, next_state, current);
 	
 	--output
 	state <= current;
-	
-	with current select enable_state <=
-		"00000001" when "000",
-		"00000010" when "001",
-		"00000100" when "010",
-		"00001000" when "011",
-		"00010000" when "100",
-		"00100000" when "101",
-		"01000000" when "110",
-		"00000000" when others;
 
 end Behavioral;
 

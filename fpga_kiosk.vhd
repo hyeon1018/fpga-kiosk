@@ -60,19 +60,28 @@ end component;
 component state_selector is
     Port ( clk : in  STD_LOGIC;
 			  rst : in  STD_LOGIC;
-           update : in  STD_LOGIC;
-           key_data : in  STD_LOGIC_VECTOR (3 downto 0);
            key_event : in  STD_LOGIC;
-           enable_state : out  STD_LOGIC_VECTOR (7 downto 0);
+           key_data : in  STD_LOGIC_VECTOR (3 downto 0);
            state : out  STD_LOGIC_VECTOR (2 downto 0));
 end component;
 
-signal price : STD_LOGIC_VECTOR(23 downto 0);
+component reg is
+	Generic ( size : integer );
+   Port ( clk : in  STD_LOGIC;
+			 rst : in  STD_LOGIC;
+			 load_en : in  STD_LOGIC;
+			 load_data : in  STD_LOGIC_VECTOR (size-1 downto 0);
+			 out_data : out  STD_LOGIC_VECTOR (size-1 downto 0));
+end component;
+
+signal price, price_t : STD_LOGIC_VECTOR(23 downto 0);
 signal key_data : STD_LOGIC_VECTOR(3 downto 0);
 signal key_event : STD_LOGIC;
 
-signal state_select : STD_LOGIC_VECTOR(7 downto 0);
 signal kiosk_state : STD_LOGIC_VECTOR(2 downto 0);
+
+--test;
+signal test_out, test_out_t : STD_LOGIC_VECTOR(7 downto 0);
 
 begin 
 
@@ -80,10 +89,35 @@ U_KPD : Key_Matrix port map (clk, '0', key_matrix_in, key_matrix_scan, key_data,
 
 U_7SEG : seven_segment port map(clk, '0', price, segment_data, segment_sel); 
 
-U_STATE : state_selector port map(clk, '0', key_event, key_data, key_event, state_select, kiosk_state);
+U_STATE : state_selector port map(clk, '0', key_event, key_data, kiosk_state);
 
-debug_led <= state_select;
+--test;
+U_PRICE_REG : reg
+					generic map (24)
+					port map (clk, '0', key_event, price_t, price);
 
+price_t <=	price + 1 when key_data = x"3" else
+				price - 1 when key_data = x"9" else
+				price + x"10" when key_data = x"2" else
+				price - x"10" when key_data = x"8" else
+				price + x"100" when key_data = x"1" else
+				price - x"100" when key_data = x"7" else
+				price;				
+
+
+U_TEST_REG : reg
+				 generic map (8)
+				 port map (clk, '0', key_event, test_out_t, test_out);
+			
+test_out_t <= test_out(0) & test_out(7 downto 1) when key_data = x"6" else
+				  test_out or "10000000" when key_data = x"5" else
+				  test_out(6 downto 0) & test_out(7) when key_data = x"4" else
+				  "10000000" when key_data = x"A" else
+				  "11111111" when key_data = x"B" else
+				  "00000" & kiosk_state when key_data = x"C" else
+				  test_out;
+				  
+debug_led <= test_out;
 
 end Behavioral;
 

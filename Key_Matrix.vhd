@@ -48,11 +48,13 @@ architecture Behavioral of Key_Matrix is
 				 rst : in STD_LOGIC;
 				 clk_out : out  STD_LOGIC);
 	end component;
+	
 	signal key_clk : STD_LOGIC;
 	signal scan_cnt : std_logic_vector (3 downto 0) := "1110";
 	signal key_data_in, key_data_reg : std_logic_vector (3 downto 0);
 	signal key_push_in, key_push_reg : std_logic_vector (3 downto 0);
 	signal k_push : std_logic;
+	signal key_event_1, key_event_2 : std_logic;
 begin
 	U_KM_CLK_DIV : clock_divider generic map(10000)
 						 port map(clk, '0', key_clk);
@@ -66,7 +68,7 @@ begin
 		end if;
 	end process;	
 	key_scan <= scan_cnt;
-	
+
 	-- register for key_data and key_push.
 	kreg: process(reset, key_clk)	
 	begin
@@ -79,6 +81,8 @@ begin
 		end if;
 	end process;
 	key_data <= key_data_reg;
+
+	
 	
 	-- check keypad push
 	k_push <= key_in(0) and key_in(1) and key_in(2) and key_in(3);
@@ -92,7 +96,16 @@ begin
 	key_push_in(3) <= k_push when scan_cnt = "0111" else
 							key_push_reg(3);
 	--not for 0->1 when pushed.	
-	key_event <= key_push_reg(0) and key_push_reg(1) and key_push_reg(2) and key_push_reg(3);
+	
+	key_event_ff : process(clk)
+	begin
+		if rising_edge(clk) then
+			key_event_2 <= key_event_1;
+			key_event_1 <= key_push_reg(0) and key_push_reg(1) and key_push_reg(2) and key_push_reg(3);
+		end if;
+	end process;
+	key_event <= key_event_2 and not key_event_1;
+
 	
 	-- key_data_in
 	key_data_in <= X"1" when scan_cnt = "1110" and key_in = "1110" else
@@ -110,7 +123,7 @@ begin
 						X"0" when scan_cnt = "1110" and key_in = "0111" else
 						X"A" when scan_cnt = "1101" and key_in = "0111" else
 						X"B" when scan_cnt = "1011" and key_in = "0111" else
-						X"C" when scan_cnt = "0111" and key_in = "1110" else
+						X"C" when scan_cnt = "0111" and key_in = "0111" else
 						key_data_reg;
 	
 end Behavioral;
