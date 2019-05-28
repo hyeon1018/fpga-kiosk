@@ -19,6 +19,13 @@ NET discount_switch<2> LOC = D1;
 NET discount_switch<1> LOC = E4;
 NET discount_switch<0> LOC = D4;
 
+//n_reset_btn : in STD_LOGIC_VECTOR (3 downto 0);
+NET n_reset_btn<3> LOC = H5;
+NET n_reset_btn<2> LOC = G5;
+NET n_reset_btn<1> LOC = G3;
+NET n_reset_btn<0> LOC = G4;
+
+
 //segment_data : out  STD_LOGIC_VECTOR (7 downto 0);
 NET segment_data<7> LOC = B9;
 NET segment_data<6> LOC = E9;

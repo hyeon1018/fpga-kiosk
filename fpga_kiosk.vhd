@@ -35,6 +35,7 @@ entity fpga_kiosk is
            key_matrix_scan : out  STD_LOGIC_VECTOR (3 downto 0);
            key_matrix_in : in  STD_LOGIC_VECTOR (3 downto 0);
 			  discount_switch : in STD_LOGIC_VECTOR (3 downto 0);
+			  n_reset_btn : in STD_LOGIC_VECTOR (3 downto 0);
            segment_data : out  STD_LOGIC_VECTOR (7 downto 0);
            segment_sel : out  STD_LOGIC_VECTOR (5 downto 0);
 			  debug_led : out STD_LOGIC_VECTOR(7 downto 0));
@@ -83,6 +84,8 @@ component excess3_6 is
            cout : out  STD_LOGIC);
 end component;
 
+signal rst : STD_LOGIC;
+
 signal key_data : STD_LOGIC_VECTOR(3 downto 0);
 signal key_event : STD_LOGIC;
 
@@ -94,13 +97,19 @@ signal total : STD_LOGIC_VECTOR(23 downto 0);
 
 begin 
 
-U_KPD : Key_Matrix port map (clk, '0', key_matrix_in, key_matrix_scan, key_data, key_event);
+rst <= not (n_reset_btn(3) and n_reset_btn(2) and n_reset_btn(1) and n_reset_btn(0));
 
-U_7SEG : seven_segment port map(clk, '0', total, segment_data, segment_sel); 
 
-U_STATE : state_selector port map(clk, '0', key_event, key_data, kiosk_state);
+U_KPD : Key_Matrix port map (clk, rst, key_matrix_in, key_matrix_scan, key_data, key_event);
+
+U_7SEG : seven_segment port map(clk, rst, total, segment_data, segment_sel); 
+
+U_STATE : state_selector port map(clk, rst, key_event, key_data, kiosk_state);
 
 --price alu process
+menu_price (23 downto 4) <= x"33333";
+menu_price (3 downto 0) <= key_data;
+
 subtotal_mux <= 	x"333333" when subtotal = x"000000" else
 						subtotal;
 
@@ -108,13 +117,13 @@ U_PRICE_ALU : excess3_6 port map (subtotal_mux, menu_price, '0', subtotal_t, ope
 
 U_SUBTOTAL_REG : reg
 					generic map (24)
-					port map (clk, '0', key_event, subtotal_t, subtotal);
+					port map (clk, rst, key_event, subtotal_t, subtotal);
 
 discount_price <= x"333333" when kiosk_state < 5 else
-						x"333433" when discount_switch = "1000" else
-						x"333533" when discount_switch = "0100" else
-						x"333833" when discount_switch = "0010" else
-						x"334333" when discount_switch = "0001" else
+						x"333343" when discount_switch = "1000" else
+						x"333353" when discount_switch = "0100" else
+						x"333383" when discount_switch = "0010" else
+						x"333433" when discount_switch = "0001" else
 						x"333333";
 
 U_DISCOUNT_ALU : excess3_6 port map (subtotal, discount_price, '1', total, open);
