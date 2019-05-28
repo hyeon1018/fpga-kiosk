@@ -34,6 +34,7 @@ entity fpga_kiosk is
     Port ( clk : in  STD_LOGIC;
            key_matrix_scan : out  STD_LOGIC_VECTOR (3 downto 0);
            key_matrix_in : in  STD_LOGIC_VECTOR (3 downto 0);
+			  discount_switch : in STD_LOGIC_VECTOR (3 downto 0);
            segment_data : out  STD_LOGIC_VECTOR (7 downto 0);
            segment_sel : out  STD_LOGIC_VECTOR (5 downto 0);
 			  debug_led : out STD_LOGIC_VECTOR(7 downto 0));
@@ -82,53 +83,43 @@ component excess3_6 is
            cout : out  STD_LOGIC);
 end component;
 
-signal price, price_t, price_add : STD_LOGIC_VECTOR(23 downto 0);
 signal key_data : STD_LOGIC_VECTOR(3 downto 0);
 signal key_event : STD_LOGIC;
 
 signal kiosk_state : STD_LOGIC_VECTOR(2 downto 0);
 
---test;
-signal test_out, test_out_t : STD_LOGIC_VECTOR(7 downto 0);
-signal alu_op : STD_LOGIC;
+signal menu_price, discount_price : STD_LOGIC_VECTOR (23 downto 0);
+signal subtotal, subtotal_t, subtotal_mux : STD_LOGIC_VECTOR(23 downto 0);
+signal total : STD_LOGIC_VECTOR(23 downto 0);
 
 begin 
 
 U_KPD : Key_Matrix port map (clk, '0', key_matrix_in, key_matrix_scan, key_data, key_event);
 
-U_7SEG : seven_segment port map(clk, '0', price, segment_data, segment_sel); 
+U_7SEG : seven_segment port map(clk, '0', total, segment_data, segment_sel); 
 
 U_STATE : state_selector port map(clk, '0', key_event, key_data, kiosk_state);
 
---test;
-U_PRICE_REG : reg
+--price alu process
+subtotal_mux <= 	x"333333" when subtotal = x"000000" else
+						subtotal;
+
+U_PRICE_ALU : excess3_6 port map (subtotal_mux, menu_price, '0', subtotal_t, open);
+
+U_SUBTOTAL_REG : reg
 					generic map (24)
-					port map (clk, '0', key_event, price_t, price);
-					
-T_EX3_ALU : excess3_6 port map(price, price_add, alu_op, price_t, open);
+					port map (clk, '0', key_event, subtotal_t, subtotal);
 
-price_add <= 	x"333334" when key_data = x"3" or key_data = x"9" else
-					x"333343" when key_data = x"2" or key_data = x"8" else
-					x"333433" when key_data = x"1" or key_data = x"7" else
-					x"333333";
+discount_price <= x"333333" when kiosk_state < 5 else
+						x"333433" when discount_switch = "1000" else
+						x"333533" when discount_switch = "0100" else
+						x"333833" when discount_switch = "0010" else
+						x"334333" when discount_switch = "0001" else
+						x"333333";
 
-alu_op <= 	'1' when key_data = x"7" or key_data = x"8" or key_data = x"9" else
-				'0';
-				
+U_DISCOUNT_ALU : excess3_6 port map (subtotal, discount_price, '1', total, open);
 
-U_TEST_REG : reg
-				 generic map (8)
-				 port map (clk, '0', key_event, test_out_t, test_out);
-			
-test_out_t <= test_out(0) & test_out(7 downto 1) when key_data = x"6" else
-				  test_out or "10000000" when key_data = x"5" else
-				  test_out(6 downto 0) & test_out(7) when key_data = x"4" else
-				  "10000000" when key_data = x"A" else
-				  "11111111" when key_data = x"B" else
-				  "00000" & kiosk_state when key_data = x"C" else
-				  test_out;
-				  
-debug_led <= test_out;
-
+--test
+debug_led <= "00000000";
 end Behavioral;
 

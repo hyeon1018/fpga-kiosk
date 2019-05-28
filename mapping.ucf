@@ -13,6 +13,12 @@ NET key_matrix_in<2> LOC = U19;
 NET key_matrix_in<1> LOC = W21;
 NET key_matrix_in<0> LOC = V19;
 
+//discount_switch : in STD_LOGIC_VECTOR (3 downto 0);
+NET discount_switch<3> LOC = C2;
+NET discount_switch<2> LOC = D1;
+NET discount_switch<1> LOC = E4;
+NET discount_switch<0> LOC = D4;
+
 //segment_data : out  STD_LOGIC_VECTOR (7 downto 0);
 NET segment_data<7> LOC = B9;
 NET segment_data<6> LOC = E9;
