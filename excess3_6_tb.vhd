@@ -44,8 +44,7 @@ ARCHITECTURE behavior OF excess3_6_tb IS
          a : IN  std_logic_vector(23 downto 0);
          b : IN  std_logic_vector(23 downto 0);
          op : IN  std_logic;
-         sum : OUT  std_logic_vector(23 downto 0);
-         cout : OUT  std_logic
+         sum : OUT  std_logic_vector(23 downto 0)
         );
     END COMPONENT;
     
@@ -57,7 +56,6 @@ ARCHITECTURE behavior OF excess3_6_tb IS
 
  	--Outputs
    signal sum : std_logic_vector(23 downto 0);
-   signal cout : std_logic;
    -- No clocks detected in port list. Replace <clock> below with 
    -- appropriate port name 
  
@@ -68,8 +66,7 @@ BEGIN
           a => a,
           b => b,
           op => op,
-          sum => sum,
-          cout => cout
+          sum => sum
         );
 
  

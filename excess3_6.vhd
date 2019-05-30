@@ -34,8 +34,7 @@ entity excess3_6 is
     Port ( a : in  STD_LOGIC_VECTOR (23 downto 0);
            b : in  STD_LOGIC_VECTOR (23 downto 0);
            op : in  STD_LOGIC;
-           sum : out  STD_LOGIC_VECTOR (23 downto 0);
-           cout : out  STD_LOGIC);
+           sum : out  STD_LOGIC_VECTOR (23 downto 0));
 end excess3_6;
 
 architecture Behavioral of excess3_6 is

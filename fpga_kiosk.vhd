@@ -80,8 +80,7 @@ component excess3_6 is
     Port ( a : in  STD_LOGIC_VECTOR (23 downto 0);
            b : in  STD_LOGIC_VECTOR (23 downto 0);
            op : in  STD_LOGIC;
-           sum : out  STD_LOGIC_VECTOR (23 downto 0);
-           cout : out  STD_LOGIC);
+           sum : out  STD_LOGIC_VECTOR (23 downto 0));
 end component;
 
 signal rst : STD_LOGIC;
@@ -107,13 +106,12 @@ U_7SEG : seven_segment port map(clk, rst, total, segment_data, segment_sel);
 U_STATE : state_selector port map(clk, rst, key_event, key_data, kiosk_state);
 
 --price alu process
-menu_price (23 downto 4) <= x"33333";
-menu_price (3 downto 0) <= key_data;
+menu_price <= x"333333";
 
 subtotal_mux <= 	x"333333" when subtotal = x"000000" else
 						subtotal;
 
-U_PRICE_ALU : excess3_6 port map (subtotal_mux, menu_price, '0', subtotal_t, open);
+U_PRICE_ALU : excess3_6 port map (subtotal_mux, menu_price, '0', subtotal_t);
 
 U_SUBTOTAL_REG : reg
 					generic map (24)
@@ -126,7 +124,7 @@ discount_price <= x"333333" when kiosk_state < 5 else
 						x"333433" when discount_switch = "0001" else
 						x"333333";
 
-U_DISCOUNT_ALU : excess3_6 port map (subtotal, discount_price, '1', total, open);
+U_DISCOUNT_ALU : excess3_6 port map (subtotal, discount_price, '1', total);
 
 --test
 debug_led <= "00000000";
