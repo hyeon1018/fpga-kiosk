@@ -104,6 +104,11 @@ component TFT_LCD is
 			  text_data : in  STD_LOGIC_VECTOR(7 downto 0));
 end component;
 
+component init_screen_rom is
+    Port ( text_addr : in  STD_LOGIC_VECTOR (7 downto 0);
+           text_data : out  STD_LOGIC_VECTOR (7 downto 0));
+end component;
+
 signal rst : STD_LOGIC;
 
 signal key_data : STD_LOGIC_VECTOR(3 downto 0);
@@ -117,7 +122,8 @@ signal total : STD_LOGIC_VECTOR(23 downto 0);
 
 signal lcd_25m_clk, clk0 : STD_LOGIC;
 
-signal text_data : STD_LOGIC_VECTOR (7 downto 0);
+signal text_data, text_addr : STD_LOGIC_VECTOR (7 downto 0);
+signal init_text : STD_LOGIC_VECTOR(7 downto 0);
 
 begin 
 
@@ -166,14 +172,22 @@ U_TFT_LCD : TFT_LCD port map (
 	nrst => n_reset_btn(3),
 	data_out => lcd_data,
 	de => lcd_de,
-	text_addr => open,
+	text_addr => text_addr,
 	text_data => text_data
 );
 
+U_INIT_SCREEN : init_screen_rom port map (
+	text_addr => text_addr,
+	text_data => init_text
+);
+
+text_data <= init_text when kiosk_state = "000" else
+				 (others => '0');
+
 lcd_clk <= lcd_25m_clk;
-text_data <= "0000" & key_data;
 
 --test
-debug_led <= "00000000";
+debug_led(7 downto 3) <= "00000";
+debug_led(2 downto 0) <= kiosk_state;
 end Behavioral;
 

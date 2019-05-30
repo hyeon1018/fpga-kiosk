@@ -60,6 +60,11 @@ END component;
 	constant tW   : integer := 480;   -- Vertical valid data width (tW)
 	constant tVFP : integer := 13;  	-- Vertical Front Porch (tVFP) = 13
                                             	-- = (tVP-tVW-tVBP-tW); 
+	constant BACK : STD_LOGIC_VECTOR(15 downto 0) := (others => '1');
+	constant CHAR : STD_LOGIC_VECTOR(15 downto 0) := (others => '0');
+	constant CURSOR : STD_LOGIC_VECTOR(15 downto 0) := "1001111111110011";
+	constant SELECTED : std_logic_vector(15 downto 0) := "1111100000011111";
+															
 	signal hsync_cnt  : STD_LOGIC_VECTOR(9 downto 0);
 	signal vsync_cnt  : STD_LOGIC_VECTOR(9 downto 0);
 
@@ -76,8 +81,9 @@ END component;
 	signal char_data : STD_LOGIC;
 	
 	signal rgb_out_t : STD_LOGIC_VECTOR(15 downto 0);
-	
+	signal nclk : STD_LOGIC;
 begin
+	nclk <= not clk;
 	-- Hsync CNT
 	process(clk, nrst)
 		begin
@@ -119,12 +125,10 @@ begin
 			de_1<='0';
 		elsif rising_edge(CLK) then
 			if ((vsync_cnt >= (tVW + tVBP)) and (vsync_cnt < (tVW + tVBP + tW ))) then  -- during tW
-				if(hsync_cnt=(tHW+tHBP-1)) then
+				if(hsync_cnt >= (tHW+tHBP)) and hsync_cnt < (tHW+tHBP+tHV) then
 					de_1<='1';
-				elsif(hsync_cnt=(tHW+tHBP+tHV-1)) then
-					de_1<='0';
 				else
-					de_1<=de_1;
+					de_1<='0';
 				end if;
 			else
 				de_1<='0';
@@ -135,7 +139,7 @@ begin
 	
 	char_addr <= text_data(5 downto 0) & vpixel_c(6 downto 2) & hpixel_c(4 downto 2);
 	
-	char : charROM port map(
+	U_CHAR : charROM port map(
 								clka => clk,
 								addra => char_addr,
 								douta => char_data_t);
@@ -234,7 +238,10 @@ begin
 	vchar_c <= vchar_c_t;
 
 	
-	data_out <= (others => '0') when char_data = '1' else
+	data_out <= CHAR when char_data = '1' and text_data(6) = '0' else
+					SELECTED when char_data = '1' and text_data(6) = '1' else
+					BACK when char_data = '0' and text_data(7) = '0' else
+					CURSOR when char_data = '0' and text_data(7) = '1' else
 					(others => '1');
 	
 	text_addr <= vchar_c & hchar_c;
