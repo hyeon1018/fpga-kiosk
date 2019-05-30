@@ -1,0 +1,17 @@
+# Output products list for <charROM>
+_xmsgs/pn_parser.xmsgs
+charROM/blk_mem_gen_v7_3_readme.txt
+charROM/doc/blk_mem_gen_v7_3_vinfo.html
+charROM/doc/pg058-blk-mem-gen.pdf
+charROM.asy
+charROM.gise
+charROM.mif
+charROM.ngc
+charROM.sym
+charROM.vhd
+charROM.vho
+charROM.xco
+charROM.xise
+charROM_flist.txt
+charROM_xmdf.tcl
+summary.log

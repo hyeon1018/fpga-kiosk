@@ -55,8 +55,38 @@ end component;
 	
 begin
 	--update current state.
-	next_state <= "000" when current = "110" and key_data = "0100" else
-					  current;
+	ss : process (key_data)
+	begin
+		if current = "000" then
+			next_state <= "001";
+		elsif current = "001" then
+			if key_data = x"4" then
+				next_state <= "011";
+			elsif key_data = x"6" then
+				next_state <= "010";
+			end if;
+		elsif current = "010" then
+			if key_data = x"4" or key_data = x"5" or key_data = x"6" then
+				next_state <= "001";
+			end if;
+		elsif current = "011" then
+			if key_data = x"4" then
+				next_state <= "100";
+			end if;
+		elsif current = "100" then
+			if key_data = x"5" then
+				next_state <= "101";
+			end if;
+		elsif current = "101" then
+			if key_data = x"5" then
+				next_state <= "110";
+			end if;
+		elsif current = "110" then
+			next_state <= "000";
+		else
+			next_state <= current;
+		end if;
+	end process;
 	
 	U_STATE_REG : reg port map (clk, rst, key_event, next_state, current);
 	

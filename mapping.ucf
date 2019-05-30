@@ -44,6 +44,31 @@ NET segment_sel<2> LOC = E7;
 NET segment_sel<1> LOC = D7;
 NET segment_sel<0> LOC = B7;
 
+//lcd_clk : out STD_LOGIC;
+NET lcd_clk LOC = V16;
+
+//lcd_de : out STD_LOGIC;
+NET lcd_de LOC = U16;
+
+//lcd_data : out STD_LOGIC_VECTOR (15 downto 0);
+NET lcd_data<15> LOC = AB18;
+NET lcd_data<14> LOC = V17;
+NET lcd_data<13> LOC = W17;
+NET lcd_data<12> LOC = Y17;
+NET lcd_data<11> LOC = AA17;
+NET lcd_data<10> LOC = AB20;
+NET lcd_data<9> LOC = AA19;
+NET lcd_data<8> LOC = AB19;
+NET lcd_data<7> LOC = W18;
+NET lcd_data<6> LOC = Y18;
+NET lcd_data<5> LOC = AA18;
+NET lcd_data<4> LOC = W14;
+NET lcd_data<3> LOC = AB13;
+NET lcd_data<2> LOC = V18;
+NET lcd_data<1> LOC = Y16;
+NET lcd_data<0> LOC = AA20;
+
+
 //debuging led;
 NET debug_led<7> LOC = N3;
 NET debug_led<6> LOC = N2;

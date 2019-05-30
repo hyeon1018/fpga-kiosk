@@ -85,6 +85,8 @@ isim.log
 xilinxsim.ini
 # End of https://www.gitignore.io/api/xilinxise
 
+*.log
+filter.filter
 
 # Created by https://www.gitignore.io/api/xilinx
 # Edit at https://www.gitignore.io/?templates=xilinx
