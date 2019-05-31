@@ -104,10 +104,13 @@ component TFT_LCD is
 			  text_data : in  STD_LOGIC_VECTOR(7 downto 0));
 end component;
 
-component init_screen_rom is
-    Port (	clk : in STD_LOGIC;
-				text_addr : in  STD_LOGIC_VECTOR (7 downto 0);
-				text_data : out  STD_LOGIC_VECTOR (7 downto 0));
+component screen_manage is
+    Port (
+		clk : in  STD_LOGIC;
+		state : in STD_LOGIC_VECTOR(2 downto 0);
+		sel : in STD_LOGIC_VECTOR(3 downto 0);
+		text_addr : in  STD_LOGIC_VECTOR(7 downto 0);
+		text_data : out  STD_LOGIC_VECTOR(7 downto 0));
 end component;
 
 signal rst : STD_LOGIC;
@@ -124,7 +127,6 @@ signal total : STD_LOGIC_VECTOR(23 downto 0);
 signal lcd_25m_clk, clk0 : STD_LOGIC;
 
 signal text_data, text_addr : STD_LOGIC_VECTOR (7 downto 0);
-signal init_text : STD_LOGIC_VECTOR(7 downto 0);
 
 begin 
 
@@ -177,14 +179,13 @@ U_TFT_LCD : TFT_LCD port map (
 	text_data => text_data
 );
 
-U_INIT_SCREEN : init_screen_rom port map (
+U_SCREEN_MGR : screen_manage port map (
 	clk => lcd_25m_clk,
+	state => kiosk_state,
+	sel => "0000",
 	text_addr => text_addr,
-	text_data => init_text
+	text_data => text_data
 );
-
-text_data <= init_text when kiosk_state = "000" else
-				 (others => '0');
 
 lcd_clk <= lcd_25m_clk;
 
