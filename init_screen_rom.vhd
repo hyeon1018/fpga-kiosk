@@ -30,13 +30,22 @@ use IEEE.STD_LOGIC_1164.ALL;
 --use UNISIM.VComponents.all;
 
 entity init_screen_rom is
-    Port ( text_addr : in  STD_LOGIC_VECTOR (7 downto 0);
-           text_data : out  STD_LOGIC_VECTOR (7 downto 0));
+    Port (	clk : in STD_LOGIC;
+				text_addr : in  STD_LOGIC_VECTOR (7 downto 0);
+				text_data : out  STD_LOGIC_VECTOR (7 downto 0));
 end init_screen_rom;
 
 architecture Behavioral of init_screen_rom is
+signal text_data_t : STD_LOGIC_VECTOR(7 downto 0);
 begin
-	text_data <= 
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			text_data <= text_data_t;
+		end if;
+	end process;
+	
+	text_data_t <= 
 				x"80" when text_addr = x"20" else
 				x"80" when text_addr = x"21" else
 				x"80" when text_addr = x"22" else
@@ -69,7 +78,6 @@ begin
 				x"80" when text_addr = x"3D" else
 				x"80" when text_addr = x"3E" else
 				x"80" when text_addr = x"3F" else
-				
 				x"5C" when text_addr = x"8A" else
 				x"5E" when text_addr = x"8B" else
 				x"51" when text_addr = x"8C" else

@@ -105,8 +105,9 @@ component TFT_LCD is
 end component;
 
 component init_screen_rom is
-    Port ( text_addr : in  STD_LOGIC_VECTOR (7 downto 0);
-           text_data : out  STD_LOGIC_VECTOR (7 downto 0));
+    Port (	clk : in STD_LOGIC;
+				text_addr : in  STD_LOGIC_VECTOR (7 downto 0);
+				text_data : out  STD_LOGIC_VECTOR (7 downto 0));
 end component;
 
 signal rst : STD_LOGIC;
@@ -177,6 +178,7 @@ U_TFT_LCD : TFT_LCD port map (
 );
 
 U_INIT_SCREEN : init_screen_rom port map (
+	clk => lcd_25m_clk,
 	text_addr => text_addr,
 	text_data => init_text
 );

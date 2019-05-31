@@ -73,17 +73,14 @@ END component;
 	
 	signal hpixel_c : STD_LOGIC_VECTOR(4 downto 0);
 	signal vpixel_c : STD_LOGIC_VECTOR(6 downto 0);
-	signal hchar_c, hchar_c_t : STD_LOGIC_VECTOR(4 downto 0);
-	signal vchar_c, vchar_c_t : STD_LOGIC_VECTOR(2 downto 0);
+	signal hchar_c : STD_LOGIC_VECTOR(4 downto 0);
+	signal vchar_c : STD_LOGIC_VECTOR(2 downto 0);
 	
 	signal char_addr : STD_LOGIC_VECTOR(13 downto 0);
 	signal char_data_t : STD_LOGIC_VECTOR(0 downto 0);
 	signal char_data : STD_LOGIC;
-	
-	signal rgb_out_t : STD_LOGIC_VECTOR(15 downto 0);
-	signal nclk : STD_LOGIC;
+
 begin
-	nclk <= not clk;
 	-- Hsync CNT
 	process(clk, nrst)
 		begin
@@ -155,14 +152,11 @@ begin
 			if ( (vsync_cnt >= (tVW + tVBP)) and (vsync_cnt < (tVW + tVBP + tW )) ) then
 				if((hsync_cnt >= (tHW + tHBP + 16)) and (hsync_cnt < (tHW + tHBP + 784))) then
 					char_en <= '1';
-					char_data <= char_data_t(0);
 				else
 					char_en <= '0';
-					char_data <= '0';
 				end if;
 			else
 				char_en <= '0';
-				char_data <= '0';
 			end if;
 		end if;
 	end process;
@@ -187,27 +181,26 @@ begin
 	process(clk, nrst)
 	begin
 		if(nrst = '0') then
-			hchar_c_t <= (others => '0');
+			hchar_c <= (others => '0');
 		elsif rising_edge(clk) then
 			if(hpixel_c = "10111") then
-				if(hchar_c_t = "11111") then
-					hchar_c_t <= (others => '0');
+				if(hchar_c = "11111") then
+					hchar_c <= (others => '0');
 				else
-					hchar_c_t <= hchar_c_t + 1;
+					hchar_c <= hchar_c + 1;
 				end if;
 			else
-				hchar_c_t <= hchar_c_t;
+				hchar_c <= hchar_c;
 			end if;
 		end if;
 	end process;
-	hchar_c <= hchar_c_t;
 	
 	process(clk, nrst)
 	begin
 		if(nrst = '0') then
 			vpixel_c <= (others => '0');
 		elsif rising_edge(clk) then
-			if(hchar_c_t = "11111" and hpixel_c = "10111") then
+			if(hchar_c = "11111" and hpixel_c = "10111") then
 				if(vpixel_c = "1001111") then
 					vpixel_c <= (others => '0');
 				else
@@ -222,26 +215,27 @@ begin
 	process(clk, nrst)
 	begin
 		if(nrst = '0') then
-			vchar_c_t <= (others => '0');
+			vchar_c <= (others => '0');
 		elsif rising_edge(clk) then
-			if(hchar_c_t = "11111" and hpixel_c = "10111" and vpixel_c = "1001111") then
-				if(vchar_c_t = "101") then
-					vchar_c_t <= (others => '0');
+			if(hchar_c = "11111" and hpixel_c = "10111" and vpixel_c = "1001111") then
+				if(vchar_c = "101") then
+					vchar_c <= (others => '0');
 				else
-					vchar_c_t <= vchar_c_t + 1;
+					vchar_c <= vchar_c + 1;
 				end if;
 			else
-				vchar_c_t <= vchar_c_t;
+				vchar_c <= vchar_c;
 			end if;
 		end if;
 	end process;
-	vchar_c <= vchar_c_t;
 
+
+	char_data <= char_data_t(0);
 	
-	data_out <= CHAR when char_data = '1' and text_data(6) = '0' else
-					SELECTED when char_data = '1' and text_data(6) = '1' else
-					BACK when char_data = '0' and text_data(7) = '0' else
-					CURSOR when char_data = '0' and text_data(7) = '1' else
+	data_out <= CHAR when char_en = '1' and char_data = '1' and text_data(6) = '0' else
+					SELECTED when char_en = '1' and  char_data = '1' and text_data(6) = '1' else
+					BACK when char_en = '1' and  char_data = '0' and text_data(7) = '0' else
+					CURSOR when char_en = '1' and  char_data = '0' and text_data(7) = '1' else
 					(others => '1');
 	
 	text_addr <= vchar_c & hchar_c;
