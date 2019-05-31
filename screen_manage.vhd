@@ -19,6 +19,7 @@
 ----------------------------------------------------------------------------------
 library IEEE;
 use IEEE.STD_LOGIC_1164.ALL;
+use IEEE.STD_LOGIC_UNSIGNED.ALL;
 
 -- Uncomment the following library declaration if using
 -- arithmetic functions with Signed or Unsigned values
@@ -42,8 +43,24 @@ end screen_manage;
 
 architecture Behavioral of screen_manage is
 signal rom_text_data_t : STD_LOGIC_VECTOR(5 downto 0);
+signal text_addr_7_5 : STD_LOGIC_VECTOR(2 downto 0);
+signal rom_addr_7_5 : STD_LOGIC_VECTOR(2 downto 0);
+signal rom_addr : STD_LOGIC_VECTOR(7 downto 0);
+
+signal cursor : STD_LOGIC;
 
 begin
+	text_addr_7_5 <= text_addr(7 downto 5);
+
+	select_data : process(clk)
+
+	begin
+		--select data source
+		--1. rom_data process
+		--2. menu_rom
+		--3. topping_rom
+	end process;
+
 	rom_data : process(clk)
 	begin	
 		if rising_edge(clk) then
@@ -140,7 +157,64 @@ begin
 			end if;
 		end if;
 	end process;
+		
+	cur : process(text_addr)
+	begin
+		if state = "001" or state = "010" then
+			if text_addr_7_5 = 1 then
+				if sel = 0 then
+					cursor <= '1';
+				else
+					cursor <= '0';
+				end if;
+			elsif text_addr_7_5 = 2 then
+				if sel = 1 then
+					cursor <= '1';
+				else
+					cursor <= '0';
+				end if;
+			elsif text_addr_7_5 = 3 then
+				if sel >= 3 and sel <= 7 then
+					cursor <= '1';
+				else
+					cursor <= '0';
+				end if;
+			elsif text_addr_7_5 = 4 then
+				if sel = 8 then
+					cursor <= '1';
+				else
+					cursor <= '0';
+				end if;
+			elsif text_addr_7_5 = 5 then
+				if sel = 9 then
+					cursor <= '1';
+				else
+					cursor <= '0';
+				end if;
+			else
+				cursor <= '0';
+			end if;
+		else
+			cursor <= '0';
+		end if;
+	end process;
 	
+	offset : process(sel, text_addr)
+	begin
+		if sel < 3 then
+			rom_addr_7_5 <= text_addr_7_5 -1;
+		elsif sel > 7 then
+			rom_addr_7_5 <= sel + text_addr_7_5 -3;
+		else
+			rom_addr_7_5 <= text_addr_7_5 + 4;
+		end if;
+	end process;
+	
+	--rom.
+	rom_addr <= rom_addr_7_5 & text_addr(4 downto 0);
+	
+	
+	text_data(6) <= cursor;
 	text_data(5 downto 0) <=
 		rom_text_data_t when state = "000" or text_addr(7 downto 5) = "000" else
 		"000000";
