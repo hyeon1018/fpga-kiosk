@@ -93,7 +93,7 @@ begin
 		selected <= '0';
 	end process;
 		
-	cur : process(text_addr)
+	cur : process(state, sel, text_addr_7_5)
 	begin
 		if state = "001" or state = "010" then
 			if text_addr_7_5 = 1 then
@@ -150,7 +150,7 @@ begin
 		end if;
 	end process;
 	
-	offset : process(sel, text_addr)
+	offset : process(sel, text_addr_7_5)
 	begin
 		if sel < 3 then
 			rom_addr_8_5 <= text_addr_7_5 -1;

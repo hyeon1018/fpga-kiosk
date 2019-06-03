@@ -59,7 +59,7 @@ end component;
 	
 begin
 	--update current state.
-	ss : process (key_data)
+	ss : process (key_data, current_state)
 	begin
 		if current_state= "000" then
 			--idle -> press any key.
@@ -106,7 +106,7 @@ begin
 		end if;
 	end process;
 	
-	process(key_data)
+	process(key_data, current_select)
 	begin
 		if key_data = x"2" then
 			next_select <= current_select - 1;
