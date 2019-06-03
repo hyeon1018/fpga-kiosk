@@ -1,0 +1,17 @@
+# Output products list for <menuROM>
+_xmsgs/pn_parser.xmsgs
+menuROM/blk_mem_gen_v7_3_readme.txt
+menuROM/doc/blk_mem_gen_v7_3_vinfo.html
+menuROM/doc/pg058-blk-mem-gen.pdf
+menuROM.asy
+menuROM.gise
+menuROM.mif
+menuROM.ngc
+menuROM.sym
+menuROM.vhd
+menuROM.vho
+menuROM.xco
+menuROM.xise
+menuROM_flist.txt
+menuROM_xmdf.tcl
+summary.log
