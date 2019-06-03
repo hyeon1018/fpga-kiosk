@@ -74,10 +74,10 @@ begin
 				next_state <= current_state;
 			end if;
 		elsif current_state= "010" then
-			--submenu -> right or ok to select order type.
+			--submenu -> right to select order type.
 			if key_data = x"4" then
 				next_state <= "001";
-			elsif key_data = x"5" or key_data = x"6" then
+			elsif key_data = x"6" then
 				next_state <= "011";
 			else
 				next_state <= current_state;

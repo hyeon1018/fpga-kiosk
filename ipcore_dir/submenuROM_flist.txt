@@ -1,0 +1,17 @@
+# Output products list for <submenuROM>
+_xmsgs/pn_parser.xmsgs
+submenuROM/blk_mem_gen_v7_3_readme.txt
+submenuROM/doc/blk_mem_gen_v7_3_vinfo.html
+submenuROM/doc/pg058-blk-mem-gen.pdf
+submenuROM.asy
+submenuROM.gise
+submenuROM.mif
+submenuROM.ngc
+submenuROM.sym
+submenuROM.vhd
+submenuROM.vho
+submenuROM.xco
+submenuROM.xise
+submenuROM_flist.txt
+submenuROM_xmdf.tcl
+summary.log

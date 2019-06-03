@@ -71,13 +71,17 @@ component state_selector is
 			  selected : out STD_LOGIC_VECTOR (3 downto 0));
 end component;
 
-component reg is
-	Generic ( size : integer );
+component menu_price_rom is
+    Port ( menu_sel : in  STD_LOGIC_VECTOR (3 downto 0);
+           menu_price : out  STD_LOGIC_VECTOR (23 downto 0));
+end component;
+
+component price_reg is
    Port ( clk : in  STD_LOGIC;
 			 rst : in  STD_LOGIC;
 			 load_en : in  STD_LOGIC;
-			 load_data : in  STD_LOGIC_VECTOR (size-1 downto 0);
-			 out_data : out  STD_LOGIC_VECTOR (size-1 downto 0));
+			 load_data : in  STD_LOGIC_VECTOR (23 downto 0);
+			 out_data : out  STD_LOGIC_VECTOR (23 downto 0));
 end component;
 
 component excess3_6 is
@@ -87,6 +91,7 @@ component excess3_6 is
            sum : out  STD_LOGIC_VECTOR (23 downto 0));
 end component;
 
+--display module
 component clk_25m is
    port ( CLKIN_IN        : in    std_logic; 
           RST_IN          : in    std_logic; 
@@ -115,20 +120,26 @@ component screen_manage is
 end component;
 
 signal rst : STD_LOGIC;
+signal rst_order : STD_LOGIC;
 
 signal key_data : STD_LOGIC_VECTOR(3 downto 0);
 signal key_event : STD_LOGIC;
 
 signal kiosk_state : STD_LOGIC_VECTOR(2 downto 0);
+signal kiosk_select : STD_LOGIC_VECTOR (3 downto 0);
 
-signal menu_price, discount_price : STD_LOGIC_VECTOR (23 downto 0);
+--subtotal
 signal subtotal, subtotal_t, subtotal_mux : STD_LOGIC_VECTOR(23 downto 0);
+signal subtotal_en : STD_LOGIC;
+
+signal menu_price_t, submenu_price_t : STD_LOGIC_VECTOR (23 downto 0);
+signal menu_price, discount_price : STD_LOGIC_VECTOR (23 downto 0);
+
 signal total : STD_LOGIC_VECTOR(23 downto 0);
 
 signal lcd_25m_clk, clk0 : STD_LOGIC;
 
 signal text_data, text_addr : STD_LOGIC_VECTOR (7 downto 0);
-signal kiosk_select : STD_LOGIC_VECTOR (3 downto 0);
 
 begin 
 
@@ -140,17 +151,24 @@ U_7SEG : seven_segment port map(clk0, rst, total, segment_data, segment_sel);
 
 U_STATE : state_selector port map(clk0, rst, key_event, key_data, kiosk_state, kiosk_select);
 
+rst_order <=
+	'1' when kiosk_state = "000" else
+	key_event when kiosk_state = "010" and key_data = x"4" else
+	'0';
 --price alu process
-menu_price <= x"333333";
+U_MENU_PRICE_ROM : menu_price_rom port map(kiosk_select, menu_price_t);
 
-subtotal_mux <= 	x"333333" when subtotal = x"000000" else
-						subtotal;
+subtotal_mux <=
+	menu_price_t when kiosk_state = "001" else
+	x"333333";	
 
-U_PRICE_ALU : excess3_6 port map (subtotal_mux, menu_price, '0', subtotal_t);
+subtotal_en <= key_event when (kiosk_state = "001" or kiosk_state = "010") and (key_data = x"5" or key_data = x"6") else
+					'0';
 
-U_SUBTOTAL_REG : reg
-					generic map (24)
-					port map (clk0, rst, key_event, subtotal_t, subtotal);
+U_SUBTOTAL_ALU : excess3_6 port map (subtotal_mux, subtotal, '0', subtotal_t);
+
+U_SUBTOTAL_REG : price_reg
+					port map (clk0, rst_order, subtotal_en, subtotal_t, subtotal);
 
 discount_price <= x"333333" when kiosk_state < 5 else
 						x"333343" when discount_switch = "1000" else
@@ -195,5 +213,6 @@ lcd_clk <= lcd_25m_clk;
 debug_led(7 downto 4) <= kiosk_select;
 debug_led(3) <= '0';
 debug_led(2 downto 0) <= kiosk_state;
+
 end Behavioral;
 
