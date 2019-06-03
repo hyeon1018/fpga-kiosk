@@ -42,15 +42,26 @@ entity screen_manage is
 end screen_manage;
 
 architecture Behavioral of screen_manage is
+
+component menuROM IS
+  PORT (
+    clka : IN STD_LOGIC;
+    addra : IN STD_LOGIC_VECTOR(8 DOWNTO 0);
+    douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
+  );
+END component;
+
 signal rom_text_data_t : STD_LOGIC_VECTOR(5 downto 0);
-signal text_addr_7_5 : STD_LOGIC_VECTOR(2 downto 0);
-signal rom_addr_7_5 : STD_LOGIC_VECTOR(2 downto 0);
-signal rom_addr : STD_LOGIC_VECTOR(7 downto 0);
+signal menu_data_t : STD_LOGIC_VECTOR(7 downto 0);
+signal text_addr_7_5 : STD_LOGIC_VECTOR(3 downto 0);
+signal rom_addr_8_5 : STD_LOGIC_VECTOR(3 downto 0);
+signal rom_addr : STD_LOGIC_VECTOR(8 downto 0);
 
 signal cursor : STD_LOGIC;
+signal selected : STD_LOGIC;
 
 begin
-	text_addr_7_5 <= text_addr(7 downto 5);
+	text_addr_7_5 <= "0" & text_addr(7 downto 5);
 
 	select_data : process(clk)
 
@@ -157,6 +168,17 @@ begin
 			end if;
 		end if;
 	end process;
+	
+	selected_row : process(text_addr)
+	begin
+		if state= "000" then
+			if text_addr <= x"33" and text_addr >= x"2D" then
+				selected <= '1';
+			else
+				selected <= '0';
+			end if;
+		end if;
+	end process;
 		
 	cur : process(text_addr)
 	begin
@@ -174,7 +196,7 @@ begin
 					cursor <= '0';
 				end if;
 			elsif text_addr_7_5 = 3 then
-				if sel >= 3 and sel <= 7 then
+				if sel >= 2 and sel <= 7 then
 					cursor <= '1';
 				else
 					cursor <= '0';
@@ -202,21 +224,30 @@ begin
 	offset : process(sel, text_addr)
 	begin
 		if sel < 3 then
-			rom_addr_7_5 <= text_addr_7_5 -1;
+			rom_addr_8_5 <= text_addr_7_5 -1;
 		elsif sel > 7 then
-			rom_addr_7_5 <= sel + text_addr_7_5 -3;
+			rom_addr_8_5 <= text_addr_7_5 + 4;
 		else
-			rom_addr_7_5 <= text_addr_7_5 + 4;
+			rom_addr_8_5 <= sel + text_addr_7_5 - 3;
 		end if;
 	end process;
+
 	
 	--rom.
-	rom_addr <= rom_addr_7_5 & text_addr(4 downto 0);
+	rom_addr <= rom_addr_8_5 & text_addr(4 downto 0);
 	
+	U_MENUROM : menuROM port map(
+		clka => clk,
+		addra => rom_addr,
+		douta => menu_data_t
+	);
 	
+	--need to delay one clock for sync with character.
+	text_data(7) <= selected;
 	text_data(6) <= cursor;
 	text_data(5 downto 0) <=
 		rom_text_data_t when state = "000" or text_addr(7 downto 5) = "000" else
+		menu_data_t(5 downto 0) when state = "001" else
 		"000000";
 
 end Behavioral;
