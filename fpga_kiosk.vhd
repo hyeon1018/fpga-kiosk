@@ -147,17 +147,19 @@ signal add_menu, add_submenu : STD_LOGIC;
 --subtotal
 signal subtotal, subtotal_t, subtotal_mux : STD_LOGIC_VECTOR(23 downto 0);
 signal submenu_bit : STD_LOGIC_VECTOR(9 downto 0);
+signal subtotal_en : STD_LOGIC;
 
 --discount
 signal discount_t, discount : STD_LOGIC_VECTOR(23 downto 0);
 signal menu_price_t, submenu_price_t : STD_LOGIC_VECTOR (23 downto 0);
-signal menu_price, discount_price : STD_LOGIC_VECTOR (23 downto 0);
 
 --total.
 signal total : STD_LOGIC_VECTOR(23 downto 0);
 
 --save order
 signal order, order_t : STD_LOGIC_VECTOR (15 downto 0);
+signal order_submenu_t : STD_LOGIC_VECTOR(9 downto 0);
+signal submenu_sub : STD_LOGIC;
 
 
 --display
@@ -176,7 +178,7 @@ begin
 
 	rst_order <=
 		'1' when kiosk_state = "000" else
-		key_event when kiosk_state = "010" and key_data = x"4" else
+		key_event when kiosk_state = "001" and key_data = x"4" else
 		'0';
 	
 --price alu process
@@ -187,18 +189,37 @@ begin
 		'1' when kiosk_state = "010" and key_data = x"5" else
 		'0';
 		
+	--save order
+	U_ORDER_REG : reg
+		port map (clk0, rst_order, key_event, order_t, order);
+		
+	U_SUBMENU_DEC : submenu_decoder
+		port map(kiosk_select, submenu_bit);
+	
+	order_t <= "00" & kiosk_select & "0000000000" when add_menu = '1' else
+				  order(15 downto 10) & (order(9 downto 0) xor submenu_bit) when add_submenu = '1' else
+				  order;
+		
 	--subtotal process
 	U_MENU_PRICE_ROM : menu_price_rom port map(kiosk_select, menu_price_t);
+
+	subtotal_en <= key_event when add_menu = '1' or add_submenu = '1' else
+						'0';
 
 	subtotal_mux <=
 		menu_price_t when add_menu = '1' else
 		submenu_price_t when add_submenu = '1' else
 		x"333333";
+	
+		--check submenu substraction.
+	order_submenu_t <= order(9 downto 0) and submenu_bit;
+	submenu_sub <= '1' when not (order_submenu_t = "0000000000") and kiosk_state = "010" else
+						'0';
 						
-	U_SUBTOTAL_ALU : excess3_6 port map (subtotal_mux, subtotal, '0', subtotal_t);
+	U_SUBTOTAL_ALU : excess3_6 port map (subtotal, subtotal_mux, submenu_sub, subtotal_t);
 
 	U_SUBTOTAL_REG : price_reg
-		port map (clk0, rst_order, '1', subtotal_t, subtotal);
+		port map (clk0, rst_order, subtotal_en, subtotal_t, subtotal);
 
 	--discount process.
 	discount_t <=
@@ -215,16 +236,6 @@ begin
 	--total process.
 	U_TOTAL_ALU : excess3_6 port map (subtotal, discount, '1', total);
 	
-	--save order
-	U_ORDER_REG : reg
-		port map (clk0, rst_order, key_event, order_t, order);
-		
-	U_SUBMENU_DEC : submenu_decoder
-		port map(kiosk_select, submenu_bit);
-	
-	order_t <= "00" & kiosk_select & "0000000000" when add_menu = '1' else
-				  order(15 downto 10) & (order(9 downto 0) xor submenu_bit) when add_submenu = '1' else
-				  order;
 	--display
 	U_CLK_25M : clk_25m port map(
 		CLKIN_IN => clk,
