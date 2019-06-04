@@ -45,7 +45,8 @@ architecture Behavioral of state_selector is
 --100~101 payment, receipt
 signal current_state, next_state : STD_LOGIC_VECTOR (2 downto 0);
 
-signal current_select, next_select : STD_LOGIC_VECTOR (3 downto 0);
+signal current_select, next_select, max_select : STD_LOGIC_VECTOR (3 downto 0);
+
 
 
 component reg is
@@ -106,12 +107,31 @@ begin
 		end if;
 	end process;
 	
+	process(current_state)
+	begin
+		if current_state = "001" then
+			max_select <= x"9";
+		elsif current_state = "010" then
+			max_select <= x"8";
+		elsif current_state = "011" then
+			max_select <= x"1";
+		end if;
+	end process;
+	
 	process(key_data, current_select)
 	begin
 		if key_data = x"2" then
-			next_select <= current_select - 1;
+			if current_select = x"0" then
+				next_select <= current_select;
+			else
+				next_select <= current_select - 1;
+			end if;
 		elsif key_data = x"8" then
-			next_select <= current_select + 1;
+			if current_select = max_select then
+				next_select <= current_select;
+			else
+				next_select <= current_select + 1;
+			end if;
 		else
 			next_select <= current_select;
 		end if;

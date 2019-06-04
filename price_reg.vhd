@@ -39,14 +39,18 @@ end price_reg;
 
 architecture Behavioral of price_reg is
 
+signal data : STD_LOGIC_VECTOR(23 downto 0);
+
 begin
 	process(clk, rst)
 	begin
 		if rst = '1' then
-			out_data <= x"333333";
+			data <= x"333333";
 		elsif load_en = '1' and rising_edge(clk) then
-			out_data <= load_data;
+			data <= load_data;
 		end if;
 	end process;
+	out_data <= data;
+	
 end Behavioral;
 

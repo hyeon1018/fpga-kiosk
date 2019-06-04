@@ -51,14 +51,6 @@ component textROM is
 			  text_data : out STD_LOGIC_VECTOR(5 downto 0));
 end component;
 
-component menuROM IS
-  PORT (
-    clka : IN STD_LOGIC;
-    addra : IN STD_LOGIC_VECTOR(8 DOWNTO 0);
-    douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
-  );
-END component;
-
 component submenuROM IS
   PORT (
     clka : IN STD_LOGIC;
@@ -66,6 +58,13 @@ component submenuROM IS
     douta : OUT STD_LOGIC_VECTOR(7 DOWNTO 0)
   );
 END component;
+
+component menu_gen is
+    Port ( clk : in  STD_LOGIC;
+           menu_bit : in  STD_LOGIC_VECTOR (15 downto 0);
+           addr : in  STD_LOGIC_VECTOR (4 downto 0);
+           dout : out  STD_LOGIC_VECTOR (7 downto 0));
+end component;
 
 signal rom_text_data_t : STD_LOGIC_VECTOR(5 downto 0);
 signal menu_data_t, submenu_data_t : STD_LOGIC_VECTOR(7 downto 0);
@@ -75,6 +74,7 @@ signal rom_addr : STD_LOGIC_VECTOR(8 downto 0);
 
 signal cursor : STD_LOGIC;
 signal selected, selected_t : STD_LOGIC;
+signal menu_bit : STD_LOGIC_VECTOR(15 downto 0);
 
 begin
 	text_addr_7_5 <= "0" & text_addr(7 downto 5);
@@ -187,13 +187,15 @@ begin
 		text_data => rom_text_data_t
 	);
 	
-	rom_addr <= rom_addr_8_5 & text_addr(4 downto 0);
-	
-	U_MENUROM : menuROM port map(
-		clka => clk,
-		addra => rom_addr,
-		douta => menu_data_t
+	menu_bit <= "10" & rom_addr_8_5 & "0000000000";
+	U_MENU_TEXT : menu_gen port map(
+		clk => clk,
+		menu_bit => menu_bit,
+		addr => text_addr(4 downto 0),
+		dout => menu_data_t
 	);
+	
+	rom_addr <= rom_addr_8_5 & text_addr(4 downto 0);
 	
 	U_SUBMENUROM : submenuROM port map (
 		clka => clk,

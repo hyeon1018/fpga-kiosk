@@ -71,16 +71,6 @@ component state_selector is
 			  selected : out STD_LOGIC_VECTOR (3 downto 0));
 end component;
 
-component menu_price_rom is
-    Port ( menu_sel : in  STD_LOGIC_VECTOR (3 downto 0);
-           menu_price : out  STD_LOGIC_VECTOR (23 downto 0));
-end component;
-
-component submenu_price_rom is
-    Port ( submenu_sel : in  STD_LOGIC_VECTOR (3 downto 0);
-           submenu_price : out  STD_LOGIC_VECTOR (23 downto 0));
-end component;
-
 component reg is
 	Generic ( size : integer := 16);
    Port ( clk : in  STD_LOGIC;
@@ -139,6 +129,11 @@ component screen_manage is
 		text_data : out  STD_LOGIC_VECTOR(7 downto 0));
 end component;
 
+component menu_price_alu is
+    Port ( menu_bit : in  STD_LOGIC_VECTOR (15 downto 0);
+           price : out  STD_LOGIC_VECTOR (23 downto 0));
+end component;
+
 signal rst : STD_LOGIC;
 signal rst_order : STD_LOGIC;
 
@@ -158,9 +153,11 @@ signal subtotal_en : STD_LOGIC;
 --discount
 signal discount_t, discount : STD_LOGIC_VECTOR(23 downto 0);
 signal menu_price_t, submenu_price_t : STD_LOGIC_VECTOR (23 downto 0);
+signal discount_en : STD_LOGIC;
 
 --total.
 signal total : STD_LOGIC_VECTOR(23 downto 0);
+signal test_total : STD_LOGIC_VECTOR(23 downto 0);
 
 --save order
 signal order, order_t : STD_LOGIC_VECTOR (15 downto 0);
@@ -178,7 +175,7 @@ begin
 
 	U_KPD : Key_Matrix port map (clk0, rst, key_matrix_in, key_matrix_scan, key_data, key_event);
 
-	U_7SEG : seven_segment port map(clk0, rst, total, segment_data, segment_sel); 
+	U_7SEG : seven_segment port map(clk0, rst, test_total, segment_data, segment_sel); 
 
 	U_STATE : state_selector port map(clk0, rst, key_event, key_data, kiosk_state, kiosk_select);
 
@@ -202,14 +199,12 @@ begin
 	U_SUBMENU_DEC : submenu_decoder
 		port map(kiosk_select, submenu_bit);
 	
-	order_t <= "00" & kiosk_select & "0000000000" when add_menu = '1' else
+	order_t <= "10" & kiosk_select & "0000000000" when add_menu = '1' else
 				  order(15 downto 10) & (order(9 downto 0) xor submenu_bit) when add_submenu = '1' else
 				  order;
 		
 	--subtotal process
-	U_MENU_PRICE_ROM : menu_price_rom port map(kiosk_select, menu_price_t);
-	U_SUBMENU_PRICE_ROM : submenu_price_rom port map(kiosk_select, submenu_price_t);
-	
+
 	subtotal_en <= key_event when add_menu = '1' or add_submenu = '1' else
 						'0';
 
@@ -229,16 +224,17 @@ begin
 		port map (clk0, rst_order, subtotal_en, subtotal_t, subtotal);
 
 	--discount process.
+	discount_en <= '1' when kiosk_state = 4 else
+						'0';
 	discount_t <=
-		x"333333" when kiosk_state < 4 else
 		x"333343" when discount_switch = "1000" else
 		x"333353" when discount_switch = "0100" else
 		x"333383" when discount_switch = "0010" else
-		x"333433" when discount_switch = "0001" else
+		"0011" & subtotal(23 downto 4) when discount_switch = "0001" else
 		x"333333";
 		
 	U_DISCOUNT_REG : price_reg
-		port map(clk0, rst_order, '1', discount_t, discount);
+		port map(clk0, rst_order, discount_en, discount_t, discount);
 
 	--total process.
 	U_TOTAL_ALU : excess3_6 port map (subtotal, discount, '1', total);
@@ -274,6 +270,9 @@ begin
 	lcd_clk <= lcd_25m_clk;
 
 	--test
+	U_MENU_PRICE_ALU : menu_price_alu port map (order, test_total);
+	
+	
 	debug_led(7 downto 4) <= kiosk_select;
 	debug_led(3) <= '0';
 	debug_led(2 downto 0) <= kiosk_state;
