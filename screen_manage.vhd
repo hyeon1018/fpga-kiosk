@@ -36,6 +36,7 @@ entity screen_manage is
 		--machine state.
 		state : in STD_LOGIC_VECTOR(2 downto 0);
 		sel : in STD_LOGIC_VECTOR(3 downto 0);
+		order : in STD_LOGIC_VECTOR(15 downto 0);
 		--lcd in/out data.
 		text_addr : in  STD_LOGIC_VECTOR(7 downto 0);
 		text_data : out  STD_LOGIC_VECTOR(7 downto 0));
@@ -73,7 +74,7 @@ signal rom_addr_8_5 : STD_LOGIC_VECTOR(3 downto 0);
 signal rom_addr : STD_LOGIC_VECTOR(8 downto 0);
 
 signal cursor : STD_LOGIC;
-signal selected : STD_LOGIC;
+signal selected, selected_t : STD_LOGIC;
 
 begin
 	text_addr_7_5 <= "0" & text_addr(7 downto 5);
@@ -85,12 +86,28 @@ begin
 		--2. menu_rom
 		--3. topping_rom
 	end process;
-
 	
+	selected_t <=
+		order(9) when rom_addr_8_5 = x"0" else
+		order(8) when rom_addr_8_5 = x"1" else
+		order(7) when rom_addr_8_5 = x"2" else
+		order(6) when rom_addr_8_5 = x"3" else
+		order(5) when rom_addr_8_5 = x"4" else
+		order(4) when rom_addr_8_5 = x"5" else
+		order(3) when rom_addr_8_5 = x"6" else
+		order(2) when rom_addr_8_5 = x"7" else
+		order(1) when rom_addr_8_5 = x"8" else
+		order(0) when rom_addr_8_5 = x"9" else
+		'0';
+		
 	
-	selected_row : process(text_addr)
+	selected_row : process(state, sel, text_addr)
 	begin
-		selected <= '0';
+		if state = "010" and not (text_addr_7_5 = "000") then
+			selected <= selected_t;
+		else
+			selected <= '0';
+		end if;
 	end process;
 		
 	cur : process(state, sel, text_addr_7_5)

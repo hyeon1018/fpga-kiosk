@@ -76,6 +76,11 @@ component menu_price_rom is
            menu_price : out  STD_LOGIC_VECTOR (23 downto 0));
 end component;
 
+component submenu_price_rom is
+    Port ( submenu_sel : in  STD_LOGIC_VECTOR (3 downto 0);
+           submenu_price : out  STD_LOGIC_VECTOR (23 downto 0));
+end component;
+
 component reg is
 	Generic ( size : integer := 16);
    Port ( clk : in  STD_LOGIC;
@@ -129,6 +134,7 @@ component screen_manage is
 		clk : in  STD_LOGIC;
 		state : in STD_LOGIC_VECTOR(2 downto 0);
 		sel : in STD_LOGIC_VECTOR(3 downto 0);
+		order : in STD_LOGIC_VECTOR(15 downto 0);
 		text_addr : in  STD_LOGIC_VECTOR(7 downto 0);
 		text_data : out  STD_LOGIC_VECTOR(7 downto 0));
 end component;
@@ -202,7 +208,8 @@ begin
 		
 	--subtotal process
 	U_MENU_PRICE_ROM : menu_price_rom port map(kiosk_select, menu_price_t);
-
+	U_SUBMENU_PRICE_ROM : submenu_price_rom port map(kiosk_select, submenu_price_t);
+	
 	subtotal_en <= key_event when add_menu = '1' or add_submenu = '1' else
 						'0';
 
@@ -259,6 +266,7 @@ begin
 		clk => lcd_25m_clk,
 		state => kiosk_state,
 		sel => kiosk_select,
+		order => order,
 		text_addr => text_addr,
 		text_data => text_data
 	);
