@@ -37,6 +37,9 @@ entity screen_manage is
 		state : in STD_LOGIC_VECTOR(2 downto 0);
 		sel : in STD_LOGIC_VECTOR(3 downto 0);
 		order : in STD_LOGIC_VECTOR(15 downto 0);
+		--read_memory
+		mem_addr : out STD_LOGIC_VECTOR(3 downto 0);
+		mem_data : in STD_LOGIC_VECTOR(15 downto 0);
 		--lcd in/out data.
 		text_addr : in  STD_LOGIC_VECTOR(7 downto 0);
 		text_data : out  STD_LOGIC_VECTOR(7 downto 0));
@@ -112,7 +115,7 @@ begin
 		
 	cur : process(state, sel, text_addr_7_5)
 	begin
-		if state = "001" or state = "010" then
+		if state = "001" or state = "010" or state = "011" then
 			if text_addr_7_5 = 1 then
 				if sel = 0 then
 					cursor <= '1';
@@ -146,24 +149,6 @@ begin
 			else
 				cursor <= '0';
 			end if;
-		elsif state = "011" then
-			if text_addr_7_5 = 3 then
-				if sel(0) = '0' then
-					cursor <= '1';
-				else
-					cursor <= '0';
-				end if;
-			elsif text_addr_7_5 = 4 then
-				if sel(0) = '1' then
-					cursor <= '1';
-				else
-					cursor <= '0';
-				end if;
-			else
-				cursor <= '0';
-			end if;
-		else
-			cursor <= '0';
 		end if;
 	end process;
 	
@@ -187,7 +172,13 @@ begin
 		text_data => rom_text_data_t
 	);
 	
-	menu_bit <= "10" & rom_addr_8_5 & "0000000000";
+	mem_addr <= rom_addr_8_5;
+	
+	menu_bit <=
+		"10" & rom_addr_8_5 & "0000000000" when state = "001" else
+		mem_data when state = "011";
+	
+	
 	U_MENU_TEXT : menu_gen port map(
 		clk => clk,
 		menu_bit => menu_bit,
@@ -207,8 +198,8 @@ begin
 	text_data(7) <= selected;
 	text_data(6) <= cursor;
 	text_data(5 downto 0) <=
-		rom_text_data_t when state = "000" or state = "011" or text_addr(7 downto 5) = "000" else
-		menu_data_t(5 downto 0) when state = "001" else
+		rom_text_data_t when state = "000" or text_addr(7 downto 5) = "000" else
+		menu_data_t(5 downto 0) when state = "001" or state = "011" else
 		submenu_data_t(5 downto 0) when state = "010" else
 		"000000";
 

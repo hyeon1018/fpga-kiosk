@@ -56,7 +56,7 @@ architecture Behavioral of Key_Matrix is
 	signal k_push : std_logic;
 	signal key_event_1, key_event_2 : std_logic;
 begin
-	U_KM_CLK_DIV : clock_divider generic map(10000)
+	U_KM_CLK_DIV : clock_divider generic map(20000)
 						 port map(clk, '0', key_clk);
 	-- generate key_scan
 	process(reset, key_clk)

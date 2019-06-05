@@ -80,6 +80,7 @@ begin
 	);
 	
 	dout <= 
+		"00000000" when menu_bit(15) = '0' else
 		price_digit_1 when addr = "11110" else
 		price_digit_2 when addr = "11101" else
 		price_digit_3 when addr = "11100" else

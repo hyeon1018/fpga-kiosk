@@ -41,84 +41,70 @@ end state_selector;
 
 architecture Behavioral of state_selector is
 
---000~011 idle, menu, submenu, order_type,
---100~101 payment, receipt
+--init select_menu, select_submenu, delete menu
+--pay reciept.
 signal current_state, next_state : STD_LOGIC_VECTOR (2 downto 0);
 
 signal current_select, next_select, max_select : STD_LOGIC_VECTOR (3 downto 0);
-
-
-
-component reg is
-	Generic ( size : integer );
-   Port ( clk : in  STD_LOGIC;
-			 rst : in  STD_LOGIC;
-			 load_en : in  STD_LOGIC;
-			 load_data : in  STD_LOGIC_VECTOR (size-1 downto 0);
-			 out_data : out  STD_LOGIC_VECTOR (size-1 downto 0));
-end component;
 	
 begin
 	--update current state.
-	ss : process (key_data, current_state)
+	SYNC_PROC : process(clk)
 	begin
-		if current_state= "000" then
-			--idle -> press any key.
-			next_state <= "001";
-		elsif current_state= "001" then
-			--menu -> right or ok to select menu.
-			if key_data = x"4" then
-				next_state <= "000";
-			elsif key_data = x"6" or key_data = x"5" then
-				next_state <= "010";
-			else
-				next_state <= current_state;
-			end if;
-		elsif current_state= "010" then
-			--submenu -> right to select order type.
-			if key_data = x"4" then
+		if rst = '1' then
+			current_state <= "000";
+			current_select <= "0000";
+		elsif rising_edge(clk) and key_event = '1' then
+			current_state <= next_state;
+			current_select <= next_select;
+		end if;
+	end process;
+	
+	NEXT_STATE_DEC : process(key_data, current_state)
+	begin
+		case current_state is
+			--init -> press any key.
+			when "000" =>
 				next_state <= "001";
-			elsif key_data = x"6" then
-				next_state <= "011";
-			else
-				next_state <= current_state;
-			end if;
-		elsif current_state= "011" then
-			--order_type -> right or ok to payment.
-			if key_data = x"4" then
-				next_state <= "010";
-			elsif key_data = x"5" or key_data = x"6" then
-				next_state <= "100";
-			else
-				next_state <= current_state;
-			end if;
-		elsif current_state= "100" then
-			--payment -> right or ok to receipt.
-			if key_data = x"4" then
-				next_state <= "011";
-			elsif key_data = x"5" or key_data = x"6" then
-				next_state <= "101";
-			else
-				next_state <= current_state;
-			end if;
-		elsif current_state= "101" then
-			--receipt -> press any key to init.
-			next_state <= "000";
-		end if;
+			--select-menu -> 5 or 6 to select submenu
+			when "001" =>
+				if key_data = x"4" then
+					next_state <= "000";
+				elsif key_data = x"5" or key_data=  x"6" then
+					next_state <= "010";
+				else
+					next_state <= current_state;
+				end if;
+			when "010" =>
+				if key_data = x"4" then
+					next_state <= "001";
+				elsif key_data = x"6" then
+					next_state <= "011";
+				else
+					next_state <= current_state;
+				end if;
+			when "011" =>
+				if key_data = x"4" then
+					next_state <= "010";
+				elsif key_data = x"5" or key_data = x"6" then
+					next_state <= "100";
+				else
+					next_state <= current_state;
+				end if;
+			when "100" =>
+				if key_data = x"4" then
+					next_state <= "011";
+				elsif key_data = x"5" or key_data = x"6" then
+					next_state <= "101";
+				else
+					next_state <= current_state;
+				end if;
+			when others =>
+				next_state <= "000";
+		end case;
 	end process;
 	
-	process(current_state)
-	begin
-		if current_state = "001" then
-			max_select <= x"9";
-		elsif current_state = "010" then
-			max_select <= x"8";
-		elsif current_state = "011" then
-			max_select <= x"1";
-		end if;
-	end process;
-	
-	process(key_data, current_select)
+	NEXT_SELECT_DECODER : process(key_data, current_select)
 	begin
 		if key_data = x"2" then
 			if current_select = x"0" then
@@ -127,8 +113,8 @@ begin
 				next_select <= current_select - 1;
 			end if;
 		elsif key_data = x"8" then
-			if current_select = max_select then
-				next_select <= current_select;
+			if current_select >= x"9" then
+				next_select <= max_select;
 			else
 				next_select <= current_select + 1;
 			end if;
@@ -136,9 +122,6 @@ begin
 			next_select <= current_select;
 		end if;
 	end process;
-	
-	U_STATE_REG : reg generic map (3) port map (clk, rst, key_event, next_state, current_state);
-	U_SELECT_REG : reg generic map (4) port map (clk, rst, key_event, next_select, current_select);
 	--output
 	state <= current_state;
 	selected <= current_select;
