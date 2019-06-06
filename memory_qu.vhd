@@ -33,6 +33,7 @@ use IEEE.STD_LOGIC_UNSIGNED.ALL;
 entity memory_qu is
     Port ( clk : in  STD_LOGIC;
 			  rst : in  STD_LOGIC;
+			  len : out STD_LOGIC_VECTOR(3 downto 0);
            load_en : in  STD_LOGIC;
            load_data : in  STD_LOGIC_VECTOR (15 downto 0);
            delete_addr : in  STD_LOGIC_VECTOR (3 downto 0);
@@ -71,6 +72,26 @@ begin
 	end generate;
 	reg_out(16) <= load_data when load_en = '1' else
 						x"0000";
+	
+	len <=
+		x"0" when reg_out(0) = x"0000" else
+		x"0" when reg_out(1) = x"0000" else
+		x"1" when reg_out(2) = x"0000" else
+		x"2" when reg_out(3) = x"0000" else
+		x"3" when reg_out(4) = x"0000" else
+		x"4" when reg_out(5) = x"0000" else
+		x"5" when reg_out(6) = x"0000" else
+		x"6" when reg_out(7) = x"0000" else
+		x"7" when reg_out(8) = x"0000" else
+		x"8" when reg_out(9) = x"0000" else
+		x"9" when reg_out(10) = x"0000" else
+		x"A" when reg_out(11) = x"0000" else
+		x"B" when reg_out(12) = x"0000" else
+		x"C" when reg_out(13) = x"0000" else
+		x"D" when reg_out(14) = x"0000" else
+		x"E" when reg_out(15) = x"0000" else
+		x"F";
+	
 	
 	--set output.
 	with addr select out_data <=

@@ -130,19 +130,19 @@ begin
 					cursor <= '0';
 				end if;
 			elsif text_addr_7_5 = 3 then
-				if sel >= 2 and sel <= 7 then
+				if sel >= 2 and sel <= max_sel - 2 then
 					cursor <= '1';
 				else
 					cursor <= '0';
 				end if;
 			elsif text_addr_7_5 = 4 then
-				if sel = 8 then
+				if sel = max_sel-1 then
 					cursor <= '1';
 				else
 					cursor <= '0';
 				end if;
 			elsif text_addr_7_5 = 5 then
-				if sel = 9 then
+				if sel = max_sel then
 					cursor <= '1';
 				else
 					cursor <= '0';
@@ -158,7 +158,7 @@ begin
 		if sel < 3 then
 			rom_addr_8_5 <= text_addr_7_5 -1;
 		elsif sel > max_sel - 2 then
-			rom_addr_8_5 <= max_sel + text_addr_7_5 - 5;
+			rom_addr_8_5 <= max_sel + text_addr_7_5 - 6;
 		else
 			rom_addr_8_5 <= sel + text_addr_7_5 - 3;
 		end if;

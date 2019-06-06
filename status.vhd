@@ -35,8 +35,11 @@ entity state_selector is
 			  rst : in  STD_LOGIC;
            key_event : in  STD_LOGIC;
            key_data : in  STD_LOGIC_VECTOR (3 downto 0);
+			  mem_len : in STD_LOGIC_VECTOR (3 downto 0);
            state : out  STD_LOGIC_VECTOR (2 downto 0);
-			  selected : out STD_LOGIC_VECTOR (3 downto 0));
+			  selected : out STD_LOGIC_VECTOR (3 downto 0);
+			  max_selected : out STD_LOGIC_VECTOR (3 downto 0);
+			  ctl : out STD_LOGIC_VECTOR(5 downto 0));
 end state_selector;
 
 architecture Behavioral of state_selector is
@@ -46,7 +49,17 @@ architecture Behavioral of state_selector is
 signal current_state, next_state : STD_LOGIC_VECTOR (2 downto 0);
 
 signal sel_rst, sel_rst_1, sel_rst_2 : STD_LOGIC;
-signal current_select, next_select, max_select : STD_LOGIC_VECTOR (3 downto 0);
+signal current_select, next_select : STD_LOGIC_VECTOR (3 downto 0);
+signal max_selected_t : STD_LOGIC_VECTOR(3 downto 0);
+
+signal mem_load_en : STD_LOGIC;
+signal mem_del_en : STD_LOGIC;
+signal subtotal_sub, del1, del2, del3: STD_LOGIC;
+signal subtotal_en : STD_LOGIC;
+signal order_rst : STD_LOGIC;
+signal mem_rst : STD_LOGIC;
+
+
 	
 begin
 	--update current state.
@@ -123,6 +136,11 @@ begin
 			end if;
 		end if;
 	end process;
+	
+	max_selected_t <=
+		x"9" when current_state = "001" or current_state = "010" else
+		mem_len when current_state = "100" or current_state = "110" else
+		x"0";
 		
 	NEXT_SELECT_DECODER : process(key_data, current_select)
 	begin
@@ -135,17 +153,48 @@ begin
 					next_select <= current_select - 1;
 				end if;
 			elsif key_data = x"8" then
-				if current_select >= x"9" then
-					next_select <= max_select;
+				if current_select >= max_selected_t then
+					next_select <= max_selected_t;
 				else
 					next_select <= current_select + 1;
 				end if;
 			end if;
 		end if;
 	end process;
+
+	del1 <=
+		key_event when current_state = "100" and key_data = x"5" else
+		'0';
+		
+	DELAY_DEL : process(clk)
+	begin
+		if rising_edge(clk) then
+			del3 <= del2;
+			del2 <= del1;
+		end if;
+	end process;	
+
+	mem_rst <=
+		'1' when current_state = "000" else
+		'0';
+		
+	mem_load_en <=
+		'1' when current_state = "011" else
+		'0';
+		
+	mem_del_en <= del2;
+	
+	subtotal_sub <= del1 or del2 or del3;
+	
+	subtotal_en <= mem_load_en or mem_del_en;
+	
+	
+	
 	--output
 	state <= current_state;
 	selected <= current_select;
+	max_selected <= max_selected_t;
+	ctl <= mem_rst & mem_load_en & mem_del_en & order_rst & subtotal_sub & subtotal_en;
 
 end Behavioral;
 

@@ -67,8 +67,11 @@ component state_selector is
 			  rst : in  STD_LOGIC;
            key_event : in  STD_LOGIC;
            key_data : in  STD_LOGIC_VECTOR (3 downto 0);
+			  mem_len : in STD_LOGIC_VECTOR (3 downto 0);
            state : out  STD_LOGIC_VECTOR (2 downto 0);
-			  selected : out STD_LOGIC_VECTOR (3 downto 0));
+			  selected : out STD_LOGIC_VECTOR (3 downto 0);
+			  max_selected : out STD_LOGIC_VECTOR (3 downto 0);
+			  ctl : out STD_LOGIC_VECTOR(5 downto 0));
 end component;
 
 component reg is
@@ -108,6 +111,7 @@ end component;
 component memory_qu is
     Port ( clk : in  STD_LOGIC;
 			  rst : in  STD_LOGIC;
+			  len : out STD_LOGIC_VECTOR(3 downto 0);
            load_en : in  STD_LOGIC;
            load_data : in  STD_LOGIC_VECTOR (15 downto 0);
            delete_addr : in  STD_LOGIC_VECTOR (3 downto 0);
@@ -155,13 +159,13 @@ signal key_event : STD_LOGIC;
 
 signal kiosk_state : STD_LOGIC_VECTOR(2 downto 0);
 signal kiosk_select : STD_LOGIC_VECTOR (3 downto 0);
+signal kiosk_ctl : STD_LOGIC_VECTOR(5 downto 0);
 
 --current
 signal menu_price : STD_LOGIC_VECTOR(23 downto 0);
 
 --subtotal
 signal subtotal, subtotal_t : STD_LOGIC_VECTOR(23 downto 0);
-signal subtotal_en : STD_LOGIC;
 
 --discount
 --signal discount_t, discount : STD_LOGIC_VECTOR(23 downto 0);
@@ -174,14 +178,14 @@ signal total : STD_LOGIC_VECTOR(23 downto 0);
 --save order
 signal order, order_t : STD_LOGIC_VECTOR (15 downto 0);
 signal submenu_sel : STD_LOGIC_VECTOR(9 downto 0);
-signal mem_en, del_en : STD_LOGIC;
-
+signal mem_len : STD_LOGIC_VECTOR(3 downto 0);
 
 --display
 signal lcd_25m_clk, clk0 : STD_LOGIC;
 signal text_data, text_addr : STD_LOGIC_VECTOR (7 downto 0);
 signal mem_addr : STD_LOGIC_VECTOR(3 downto 0);
 signal mem_data : STD_LOGIC_VECTOR(15 downto 0);
+signal max_sel : STD_LOGIC_VECTOR(3 downto 0);
 
 begin 
 
@@ -191,8 +195,17 @@ begin
 
 	U_7SEG : seven_segment port map(clk0, rst, total, segment_data, segment_sel); 
 
-	U_STATE : state_selector port map(clk0, rst, key_event, key_data, kiosk_state, kiosk_select);
-
+	U_STATE : state_selector port map(
+		clk => clk0,
+		rst => rst,
+		key_event => key_event,
+		key_data => key_data,
+		mem_len => mem_len,
+		state => kiosk_state,
+		selected => kiosk_select,
+		max_selected => max_sel,
+		ctl => kiosk_ctl
+	);
 	
 --price alu process
 	--current order
@@ -214,9 +227,9 @@ begin
 	--subtotal process
 	U_CURRENT_ORDER_PRICE : menu_price_alu port map (order, menu_price);
 	
-	U_SUBTOTAL_ALU : excess3_6 port map (subtotal, menu_price, '0', subtotal_t);
+	U_SUBTOTAL_ALU : excess3_6 port map (subtotal, menu_price, kiosk_ctl(1), subtotal_t);
 
-	U_SUBTOTAL_REG : price_reg port map (clk0, rst, subtotal_en, subtotal_t, subtotal);	
+	U_SUBTOTAL_REG : price_reg port map (clk0, kiosk_ctl(5), kiosk_ctl(0), subtotal_t, subtotal);	
 	
 	--discount process.
 
@@ -225,21 +238,14 @@ begin
 	total <= subtotal;
 	
 	--orders memory.
-	mem_en <=
-		'1' when kiosk_state = "011" else
-		'0';
-	del_en <=
-		key_event when key_data = x"D" else
-		'0';
-	subtotal_en <= mem_en or del_en;
-	
 	U_ORDER_MEM : memory_qu port map (
 		clk => clk0,
-		rst => rst,
-		load_en => mem_en,
+		rst => kiosk_ctl(5),
+		len => mem_len,
+		load_en => kiosk_ctl(4),
 		load_data => order,
 		delete_addr => kiosk_select,
-		delete_en => del_en,
+		delete_en => kiosk_ctl(3),
 		addr => mem_addr,
 		out_data => mem_data
 	);
@@ -267,7 +273,7 @@ begin
 		clk => lcd_25m_clk,
 		state => kiosk_state,
 		sel => kiosk_select,
-		max_sel => "1001",
+		max_sel => max_sel,
 		order => order,
 		mem_addr => mem_addr,
 		mem_data => mem_data,
@@ -279,9 +285,8 @@ begin
 
 	--test
 	
-	debug_led(7 downto 4) <= kiosk_select;
-	debug_led(3) <= '0';
-	debug_led(2 downto 0) <= kiosk_state;
+	debug_led(7 downto 4) <= mem_len;
+	debug_led(3 downto 0) <= kiosk_select;
 	
 end Behavioral;
 
