@@ -36,7 +36,7 @@ entity memory_qu is
            load_en : in  STD_LOGIC;
            load_data : in  STD_LOGIC_VECTOR (15 downto 0);
            delete_addr : in  STD_LOGIC_VECTOR (3 downto 0);
-           delete_en : in  STD_LOGIC;
+           delete_en : in  STD_LOGIC; 
 			  addr : in STD_LOGIC_VECTOR (3 downto 0);
            out_data : out  STD_LOGIC_VECTOR (15 downto 0));
 end memory_qu;

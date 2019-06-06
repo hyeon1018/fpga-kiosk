@@ -140,6 +140,7 @@ component screen_manage is
 		clk : in  STD_LOGIC;
 		state : in STD_LOGIC_VECTOR(2 downto 0);
 		sel : in STD_LOGIC_VECTOR(3 downto 0);
+		max_sel : in STD_LOGIC_VECTOR(3 downto 0);
 		order : in STD_LOGIC_VECTOR(15 downto 0);
 		mem_addr : out STD_LOGIC_VECTOR(3 downto 0);
 		mem_data : in STD_LOGIC_VECTOR(15 downto 0);
@@ -159,8 +160,7 @@ signal kiosk_select : STD_LOGIC_VECTOR (3 downto 0);
 signal menu_price : STD_LOGIC_VECTOR(23 downto 0);
 
 --subtotal
-signal subtotal, subtotal_t, subtotal_mux : STD_LOGIC_VECTOR(23 downto 0);
-signal submenu_bit : STD_LOGIC_VECTOR(9 downto 0);
+signal subtotal, subtotal_t : STD_LOGIC_VECTOR(23 downto 0);
 signal subtotal_en : STD_LOGIC;
 
 --discount
@@ -216,7 +216,7 @@ begin
 	
 	U_SUBTOTAL_ALU : excess3_6 port map (subtotal, menu_price, '0', subtotal_t);
 
-	U_SUBTOTAL_REG : price_reg port map (clk0, rst, mem_en, subtotal_t, subtotal);	
+	U_SUBTOTAL_REG : price_reg port map (clk0, rst, subtotal_en, subtotal_t, subtotal);	
 	
 	--discount process.
 
@@ -226,11 +226,12 @@ begin
 	
 	--orders memory.
 	mem_en <=
-		key_event when key_data=x"0" else
+		'1' when kiosk_state = "011" else
 		'0';
 	del_en <=
 		key_event when key_data = x"D" else
 		'0';
+	subtotal_en <= mem_en or del_en;
 	
 	U_ORDER_MEM : memory_qu port map (
 		clk => clk0,
@@ -266,6 +267,7 @@ begin
 		clk => lcd_25m_clk,
 		state => kiosk_state,
 		sel => kiosk_select,
+		max_sel => "1001",
 		order => order,
 		mem_addr => mem_addr,
 		mem_data => mem_data,
