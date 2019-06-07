@@ -59,7 +59,7 @@ begin
 	begin
 		U_ALU : excess3_alu port map(a(4*K+3 downto 4*K), b(4*K+3 downto 4*K), t_carry(K), op, t_sum(4*K+3 downto 4*K), t_carry(K+1), t_sign(K));
 	end generate;
-	sum <= 	t_sum when t_sign(5) = '0' else
+	sum <= t_sum when t_sign(5) = '0' else
 				x"333333";
 	t_carry(0) <= op and not t_sign(5);
 	

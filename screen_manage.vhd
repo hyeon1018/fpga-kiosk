@@ -105,7 +105,7 @@ begin
 		'0';
 		
 	
-	selected_row : process(state, sel, text_addr)
+	selected_row : process(state, sel, text_addr_7_5, selected_t)
 	begin
 		if state = "010" and not (text_addr_7_5 = "000") then
 			selected <= selected_t;
@@ -114,7 +114,7 @@ begin
 		end if;
 	end process;
 		
-	cur : process(state, sel, text_addr_7_5)
+	cur : process(state, sel, text_addr_7_5, max_sel)
 	begin
 		if state = "001" or state = "010" or state = "100" then
 			if text_addr_7_5 = 1 then

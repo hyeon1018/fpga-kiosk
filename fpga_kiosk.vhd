@@ -71,7 +71,15 @@ component state_selector is
            state : out  STD_LOGIC_VECTOR (2 downto 0);
 			  selected : out STD_LOGIC_VECTOR (3 downto 0);
 			  max_selected : out STD_LOGIC_VECTOR (3 downto 0);
-			  ctl : out STD_LOGIC_VECTOR(5 downto 0));
+			  mem_rst : out STD_LOGIC;
+			  mem_load_en : out STD_LOGIC;
+			  mem_del_en : out STD_LOGIC;
+			  order_reg_rst : out STD_LOGIC;
+			  order_reg_en : out STD_LOGIC;
+			  order_reg_sel : out STD_LOGIC;
+			  subtotal_en : out STD_LOGIC;
+			  subtotal_op : out STD_LOGIC;
+			  discount_en : out STD_LOGIC);
 end component;
 
 component reg is
@@ -159,31 +167,33 @@ signal key_event : STD_LOGIC;
 
 signal kiosk_state : STD_LOGIC_VECTOR(2 downto 0);
 signal kiosk_select : STD_LOGIC_VECTOR (3 downto 0);
-signal kiosk_ctl : STD_LOGIC_VECTOR(5 downto 0);
+
 
 --current
 signal menu_price : STD_LOGIC_VECTOR(23 downto 0);
-
+signal order_reg_rst, order_reg_en, order_reg_sel : STD_LOGIC;
 --subtotal
-signal subtotal, subtotal_t : STD_LOGIC_VECTOR(23 downto 0);
+signal subtotal, subtotal_t, sub_price : STD_LOGIC_VECTOR(23 downto 0);
+signal subtotal_en, subtotal_op, sub_reg_en : STD_LOGIC;
 
 --discount
 --signal discount_t, discount : STD_LOGIC_VECTOR(23 downto 0);
 --signal menu_price_t, submenu_price_t : STD_LOGIC_VECTOR (23 downto 0);
---signal discount_en : STD_LOGIC;
+signal discount_en : STD_LOGIC;
 
 --total.
 signal total : STD_LOGIC_VECTOR(23 downto 0);
 
 --save order
-signal order, order_t : STD_LOGIC_VECTOR (15 downto 0);
+signal order, order_t, calc_order : STD_LOGIC_VECTOR (15 downto 0);
 signal submenu_sel : STD_LOGIC_VECTOR(9 downto 0);
 signal mem_len : STD_LOGIC_VECTOR(3 downto 0);
+signal mem_rst, mem_load_en, mem_del_en : STD_LOGIC;
 
 --display
 signal lcd_25m_clk, clk0 : STD_LOGIC;
 signal text_data, text_addr : STD_LOGIC_VECTOR (7 downto 0);
-signal mem_addr : STD_LOGIC_VECTOR(3 downto 0);
+signal mem_addr, mem_addr_t : STD_LOGIC_VECTOR(3 downto 0);
 signal mem_data : STD_LOGIC_VECTOR(15 downto 0);
 signal max_sel : STD_LOGIC_VECTOR(3 downto 0);
 
@@ -193,7 +203,7 @@ begin
 
 	U_KPD : Key_Matrix port map (clk0, rst, key_matrix_in, key_matrix_scan, key_data, key_event);
 
-	U_7SEG : seven_segment port map(clk0, rst, total, segment_data, segment_sel); 
+	U_7SEG : seven_segment port map(clk0, rst, subtotal, segment_data, segment_sel); 
 
 	U_STATE : state_selector port map(
 		clk => clk0,
@@ -204,32 +214,46 @@ begin
 		state => kiosk_state,
 		selected => kiosk_select,
 		max_selected => max_sel,
-		ctl => kiosk_ctl
+		
+		mem_rst => mem_rst,
+		mem_load_en => mem_load_en,
+		mem_del_en => mem_del_en,
+		order_reg_rst => order_reg_rst,
+		order_reg_en => order_reg_en,
+		order_reg_sel => order_reg_sel,
+		subtotal_en => subtotal_en,
+		subtotal_op => subtotal_op,
+		discount_en => discount_en
 	);
 	
 --price alu process
 	--current order
 	U_SUBMENU_DECODER : submenu_decoder port map (kiosk_select, submenu_sel);
 	
+	--control--
 	order_t <=
-		"10" & kiosk_select & "0000000000" when kiosk_state = "001" else
-		order(15 downto 10) & (order(9 downto 0) xor submenu_sel) when kiosk_state = "010" and key_data = x"5" else
-		order;
+		order(15 downto 10) & (order(9 downto 0) xor submenu_sel) when order_reg_sel = '1' else
+		"10" & kiosk_select & "0000000000";
 	
 	R_CURRENT_ORDER : reg port map (
 		clk => clk0,
 		rst => rst,
-		load_en => key_event,
+		load_en => order_reg_en,
 		load_data => order_t,
 		out_data => order
 	);
 	
 	--subtotal process
-	U_CURRENT_ORDER_PRICE : menu_price_alu port map (order, menu_price);
-	
-	U_SUBTOTAL_ALU : excess3_6 port map (subtotal, menu_price, kiosk_ctl(1), subtotal_t);
+	--ordre -> mux order / mem_data.
+	calc_order <=
+		mem_data when subtotal_op = '1' else
+		order;
 
-	U_SUBTOTAL_REG : price_reg port map (clk0, kiosk_ctl(5), kiosk_ctl(0), subtotal_t, subtotal);	
+	U_CURRENT_ORDER_PRICE : menu_price_alu port map (calc_order, menu_price);
+	
+	U_SUBTOTAL_ALU : excess3_6 port map (subtotal, menu_price, subtotal_op, subtotal_t);
+
+	U_SUBTOTAL_REG : price_reg port map (clk0, mem_rst, subtotal_en, subtotal_t, subtotal);	
 	
 	--discount process.
 
@@ -238,15 +262,20 @@ begin
 	total <= subtotal;
 	
 	--orders memory.
+	--addr -> mux / mem_addr or sel.
+	mem_addr_t <=
+		kiosk_select when subtotal_op = '1' else
+		mem_addr;
+	
 	U_ORDER_MEM : memory_qu port map (
 		clk => clk0,
-		rst => kiosk_ctl(5),
+		rst => mem_rst,
 		len => mem_len,
-		load_en => kiosk_ctl(4),
+		load_en => mem_load_en,
 		load_data => order,
 		delete_addr => kiosk_select,
-		delete_en => kiosk_ctl(3),
-		addr => mem_addr,
+		delete_en => mem_del_en,
+		addr => mem_addr_t,
 		out_data => mem_data
 	);
 	
@@ -284,9 +313,7 @@ begin
 	lcd_clk <= lcd_25m_clk;
 
 	--test
-	
-	debug_led(7 downto 4) <= mem_len;
-	debug_led(3 downto 0) <= kiosk_select;
+	debug_led(7 downto 0) <= order(15 downto 8);
 	
 end Behavioral;
 

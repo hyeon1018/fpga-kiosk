@@ -2,7 +2,7 @@
 -- Company: 
 -- Engineer:
 --
--- Create Date:   20:32:21 05/27/2019
+-- Create Date:   23:06:59 06/06/2019
 -- Design Name:   
 -- Module Name:   /home/dohyeon/workspace/fpga_kiosk/excess3_6_tb.vhd
 -- Project Name:  fpga_kiosk
@@ -69,21 +69,20 @@ BEGIN
           sum => sum
         );
 
- 
 
    -- Stimulus process
    stim_proc: process
    begin		
       -- hold reset state for 100 ns.
-      wait for 100 ns;	
 
       -- insert stimulus here 
-		a <= x"55A641";
-		b <= x"385634";
+		a <= x"433333";
+		b <= x"33B333";
 		op <= '1';
 		
-		wait for 100 ns;
-
+		wait for 10 ns;
+		
+		
       wait;
    end process;
 

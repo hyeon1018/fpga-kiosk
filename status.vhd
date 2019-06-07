@@ -39,7 +39,16 @@ entity state_selector is
            state : out  STD_LOGIC_VECTOR (2 downto 0);
 			  selected : out STD_LOGIC_VECTOR (3 downto 0);
 			  max_selected : out STD_LOGIC_VECTOR (3 downto 0);
-			  ctl : out STD_LOGIC_VECTOR(5 downto 0));
+			  --ctl signals.
+			  mem_rst : out STD_LOGIC;
+			  mem_load_en : out STD_LOGIC;
+			  mem_del_en : out STD_LOGIC;
+			  order_reg_rst : out STD_LOGIC;
+			  order_reg_en : out STD_LOGIC;
+			  order_reg_sel : out STD_LOGIC;
+			  subtotal_en : out STD_LOGIC;
+			  subtotal_op : out STD_LOGIC;
+			  discount_en : out STD_LOGIC);
 end state_selector;
 
 architecture Behavioral of state_selector is
@@ -52,14 +61,9 @@ signal sel_rst, sel_rst_1, sel_rst_2 : STD_LOGIC;
 signal current_select, next_select : STD_LOGIC_VECTOR (3 downto 0);
 signal max_selected_t : STD_LOGIC_VECTOR(3 downto 0);
 
-signal mem_load_en : STD_LOGIC;
-signal mem_del_en : STD_LOGIC;
-signal subtotal_sub, del1, del2, del3: STD_LOGIC;
-signal subtotal_en : STD_LOGIC;
-signal order_rst : STD_LOGIC;
-signal mem_rst : STD_LOGIC;
-
-
+signal del1, del2, del3, del4, del5, del6, del7, del8: STD_LOGIC;
+signal s001_1, s001_2 :STD_LOGIC;
+signal mem_load_en_t : STD_LOGIC;
 	
 begin
 	--update current state.
@@ -72,7 +76,7 @@ begin
 		end if;
 	end process;
 	
-	-- 2 clock delayed reset signal.
+	-- 2 clock delayed select1 reset signal.
 	sel_rst <= '0' when current_state = next_state else
 					'1';
 	DELAY_SEL_RST : process(clk)
@@ -92,7 +96,7 @@ begin
 		end if;
 	end process;
 	
-	NEXT_STATE_DEC : process(key_data, current_state)
+	NEXT_STATE_DEC : process(key_data, current_state, key_event)
 	begin
 		next_state <= current_state;
 		if key_event = '1' then
@@ -142,7 +146,7 @@ begin
 		mem_len when current_state = "100" or current_state = "110" else
 		x"0";
 		
-	NEXT_SELECT_DECODER : process(key_data, current_select)
+	NEXT_SELECT_DECODER : process(key_data, current_select, key_event, max_selected_t)
 	begin
 		next_select <= current_select;
 		if key_event = '1' then
@@ -162,39 +166,72 @@ begin
 		end if;
 	end process;
 
-	del1 <=
-		key_event when current_state = "100" and key_data = x"5" else
-		'0';
-		
 	DELAY_DEL : process(clk)
 	begin
 		if rising_edge(clk) then
+			del8 <= del7;
+			del7 <= del6;
+			del6 <= del5;
+			del5 <= del4;
+			del4 <= del3;
 			del3 <= del2;
 			del2 <= del1;
+			if current_state = "100" and key_data = x"5" and key_event = '1' then
+				del1 <= '1';
+			else
+				del1 <= '0';
+			end if;
 		end if;
-	end process;	
-
-	mem_rst <=
-		'1' when current_state = "000" else
-		'0';
-		
-	mem_load_en <=
+	end process;
+	
+	process(clk)
+	begin
+		if rising_edge(clk) then
+			s001_2 <= s001_1;
+			if current_state = "001" then
+				s001_1 <= '1';
+			else
+				s001_1 <= '0';
+			end if;
+		end if;
+	end process;
+	
+	mem_load_en_t <=
 		'1' when current_state = "011" else
 		'0';
-		
-	mem_del_en <= del2;
-	
-	subtotal_sub <= del1 or del2 or del3;
-	
-	subtotal_en <= mem_load_en or mem_del_en;
-	
-	
 	
 	--output
 	state <= current_state;
 	selected <= current_select;
 	max_selected <= max_selected_t;
-	ctl <= mem_rst & mem_load_en & mem_del_en & order_rst & subtotal_sub & subtotal_en;
+	
+	mem_rst <=
+		'1' when current_state = "000" else
+		'0';
+	
+	mem_load_en <= mem_load_en_t;
+	
+	mem_del_en <= del8;
+	
+	order_reg_rst <= s001_1 and not s001_2;
+	
+	order_reg_en <=
+		key_event when (current_state = "001" and (key_data = x"5" or key_data = x"6"))
+					or (current_state = "010" and key_data = x"5") else
+		'0';
+	
+	order_reg_sel <=
+		'1' when current_state = "010" else
+		'0';
+	
+	subtotal_en <= del6 or mem_load_en_t;
+	
+	subtotal_op <= del1 or del2 or del3 or del4 or del5 or del6 or del7 or del8;
+	
+	discount_en <=
+		'1' when current_state = "101" else
+		'0';
+	
 
 end Behavioral;
 

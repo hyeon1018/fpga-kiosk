@@ -43,10 +43,12 @@ begin
 
 	process (clk, rst)
 	begin
-		if rst = '1' then
-			out_data <= (others => '0');
-		elsif load_en = '1' and rising_edge(clk) then
-			out_data <= load_data;
+		if rising_edge(clk) then
+			if rst = '1' then
+				out_data <= (others => '0');
+			elsif load_en = '1'then
+				out_data <= load_data;
+			end if;
 		end if;
 	end process;
 	
