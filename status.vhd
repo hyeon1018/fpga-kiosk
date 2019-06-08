@@ -130,7 +130,9 @@ begin
 						next_state <= "110";
 					end if;
 				when "110" =>
-					next_state <= "000";
+					if key_data = x"5" then
+						next_state <= "000";
+					end if;
 				when others =>
 					next_state <= "000";
 			end case;
@@ -143,7 +145,9 @@ begin
 	
 	max_selected_t <=
 		x"9" when current_state = "001" or current_state = "010" else
-		mem_len when current_state = "100" or current_state = "110" else
+		mem_len when current_state = "100" else
+		x"0" when current_state = "110" and mem_len < 4 else
+		mem_len - 4 when current_state = "110" and mem_len >= 4 else
 		x"0";
 		
 	NEXT_SELECT_DECODER : process(key_data, current_select, key_event, max_selected_t)
@@ -163,6 +167,8 @@ begin
 					next_select <= current_select + 1;
 				end if;
 			end if;
+		elsif current_select >= max_selected_t then
+			next_select <= max_selected_t;
 		end if;
 	end process;
 

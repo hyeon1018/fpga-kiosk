@@ -130,7 +130,28 @@ begin
 				end case;
 			elsif state = "100" then
 				case text_addr is
-					--header payment
+					--header check your order
+					when x"08" => text_data <= "001111";
+					when x"09" => text_data <= "010100";
+					when x"0A" => text_data <= "010001";
+					when x"0B" => text_data <= "001111";
+					when x"0C" => text_data <= "010111";
+					when x"0D" => text_data <= "000000";
+					when x"0E" => text_data <= "100101";
+					when x"0F" => text_data <= "011011";
+					when x"10" => text_data <= "100001";
+					when x"11" => text_data <= "011110";
+					when x"12" => text_data <= "000000";
+					when x"13" => text_data <= "011011";
+					when x"14" => text_data <= "011110";
+					when x"15" => text_data <= "010000";
+					when x"16" => text_data <= "010001";
+					when x"17" => text_data <= "011110";
+					when others => text_data <= "000000";
+				end case;
+			elsif state = "101" then
+				case text_addr is
+					--payment
 					when x"0D" => text_data <= "011100";
 					when x"0E" => text_data <= "001101";
 					when x"0F" => text_data <= "100101";
@@ -139,11 +160,11 @@ begin
 					when x"12" => text_data <= "011010";
 					when x"13" => text_data <= "100000";
 					when others => text_data <= "000000";
-					--?press and key to continue
+					--use coupon with dip switch
 				end case;
-			elsif state = "101" then
+			elsif state = "110" then
 				case text_addr is
-					--receipt
+					--recipt.
 					when x"0D" => text_data <= "011110";
 					when x"0E" => text_data <= "010001";
 					when x"0F" => text_data <= "001111";

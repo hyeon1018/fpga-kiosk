@@ -168,17 +168,17 @@ signal key_event : STD_LOGIC;
 signal kiosk_state : STD_LOGIC_VECTOR(2 downto 0);
 signal kiosk_select : STD_LOGIC_VECTOR (3 downto 0);
 
+signal segment_price : STD_LOGIC_VECTOR(23 downto 0);
 
 --current
 signal menu_price : STD_LOGIC_VECTOR(23 downto 0);
 signal order_reg_rst, order_reg_en, order_reg_sel : STD_LOGIC;
 --subtotal
-signal subtotal, subtotal_t, sub_price : STD_LOGIC_VECTOR(23 downto 0);
-signal subtotal_en, subtotal_op, sub_reg_en : STD_LOGIC;
+signal subtotal, subtotal_t : STD_LOGIC_VECTOR(23 downto 0);
+signal subtotal_en, subtotal_op : STD_LOGIC;
 
 --discount
---signal discount_t, discount : STD_LOGIC_VECTOR(23 downto 0);
---signal menu_price_t, submenu_price_t : STD_LOGIC_VECTOR (23 downto 0);
+signal discount_t, discount : STD_LOGIC_VECTOR(23 downto 0);
 signal discount_en : STD_LOGIC;
 
 --total.
@@ -203,8 +203,13 @@ begin
 
 	U_KPD : Key_Matrix port map (clk0, rst, key_matrix_in, key_matrix_scan, key_data, key_event);
 
-	U_7SEG : seven_segment port map(clk0, rst, subtotal, segment_data, segment_sel); 
-
+	U_7SEG : seven_segment port map(clk0, rst, segment_price, segment_data, segment_sel); 
+	
+	segment_price <=
+		subtotal_t when kiosk_state = "010" else
+		subtotal when kiosk_state = "001" or kiosk_state = "100" else
+		total;
+	
 	U_STATE : state_selector port map(
 		clk => clk0,
 		rst => rst,
@@ -256,10 +261,17 @@ begin
 	U_SUBTOTAL_REG : price_reg port map (clk0, mem_rst, subtotal_en, subtotal_t, subtotal);	
 	
 	--discount process.
+	
+	discount_t <=
+		x"334333" when discount_switch = "1000" else
+		"0011" & subtotal(19 downto 0) when discount_switch = "0001" else
+		x"333333";
+
+	U_DISCOUNT_REG : price_reg port map (clk0 , mem_rst, discount_en, discount_t, discount);
 
 	--total process.
-	--U_TOTAL_ALU : excess3_6 port map (subtotal, discount, '1', total);
-	total <= subtotal;
+	U_TOTAL_ALU : excess3_6 port map (subtotal, discount, '1', total);
+	
 	
 	--orders memory.
 	--addr -> mux / mem_addr or sel.
@@ -313,7 +325,7 @@ begin
 	lcd_clk <= lcd_25m_clk;
 
 	--test
-	debug_led(7 downto 0) <= order(15 downto 8);
+	debug_led(7 downto 0) <= max_sel & kiosk_select;
 	
 end Behavioral;
 

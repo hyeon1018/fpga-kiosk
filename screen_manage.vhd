@@ -114,51 +114,42 @@ begin
 		end if;
 	end process;
 		
-	cur : process(state, sel, text_addr_7_5, max_sel)
+	cur : process(state, sel, text_addr, max_sel)
 	begin
+		cursor <= '0';
 		if state = "001" or state = "010" or state = "100" then
 			if text_addr_7_5 = 1 then
 				if sel = 0 then
 					cursor <= '1';
-				else
-					cursor <= '0';
 				end if;
 			elsif text_addr_7_5 = 2 then
 				if sel = 1 then
 					cursor <= '1';
-				else
-					cursor <= '0';
 				end if;
 			elsif text_addr_7_5 = 3 then
-				if sel >= 2 and sel <= max_sel - 2 then
+				if (sel >= 2 and sel <= max_sel - 2) or (max_sel < 4 and sel = 2) then
 					cursor <= '1';
-				else
-					cursor <= '0';
 				end if;
 			elsif text_addr_7_5 = 4 then
-				if sel = max_sel-1 then
+				if (max_sel >= 4 and sel = max_sel-1) or (max_sel < 4 and sel = 3)  then
 					cursor <= '1';
-				else
-					cursor <= '0';
 				end if;
 			elsif text_addr_7_5 = 5 then
 				if sel = max_sel then
 					cursor <= '1';
-				else
-					cursor <= '0';
 				end if;
-			else
-				cursor <= '0';
 			end if;
 		end if;
 	end process;
 	
 	offset : process(sel, text_addr_7_5)
 	begin
-		if sel < 3 then
+		if state = "110" then
+			rom_addr_8_5 <= text_addr_7_5 + sel - 1;
+		elsif sel < 3 or max_sel < 4 then
 			rom_addr_8_5 <= text_addr_7_5 -1;
 		elsif sel > max_sel - 2 then
-			rom_addr_8_5 <= max_sel + text_addr_7_5 - 6;
+			rom_addr_8_5 <= max_sel + text_addr_7_5 - 5;
 		else
 			rom_addr_8_5 <= sel + text_addr_7_5 - 3;
 		end if;
@@ -177,7 +168,7 @@ begin
 	
 	menu_bit <=
 		"10" & rom_addr_8_5 & "0000000000" when state = "001" else
-		mem_data when state = "100";
+		mem_data when state = "100" or state = "110";
 	
 	
 	U_MENU_TEXT : menu_gen port map(
@@ -199,8 +190,8 @@ begin
 	text_data(7) <= selected;
 	text_data(6) <= cursor;
 	text_data(5 downto 0) <=
-		rom_text_data_t when state = "000" or text_addr(7 downto 5) = "000" else
-		menu_data_t(5 downto 0) when state = "001" or state = "100" else
+		rom_text_data_t when state = "000" or state = "101" or text_addr(7 downto 5) = "000" else
+		menu_data_t(5 downto 0) when state = "001" or state = "100" or state = "110" else
 		submenu_data_t(5 downto 0) when state = "010" else
 		"000000";
 
