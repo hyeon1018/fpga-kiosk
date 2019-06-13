@@ -264,7 +264,9 @@ begin
 	
 	discount_t <=
 		x"334333" when discount_switch = "1000" else
-		"0011" & subtotal(19 downto 0) when discount_switch = "0001" else
+		x"335333" when discount_switch = "0100" else
+		x"338333" when discount_switch = "0010" else
+		"0011" & subtotal(23 downto 4) when discount_switch = "0001" else
 		x"333333";
 
 	U_DISCOUNT_REG : price_reg port map (clk0 , mem_rst, discount_en, discount_t, discount);
@@ -325,7 +327,7 @@ begin
 	lcd_clk <= lcd_25m_clk;
 
 	--test
-	debug_led(7 downto 0) <= max_sel & kiosk_select;
+	debug_led(7 downto 0) <= subtotal(15 downto 8);
 	
 end Behavioral;
 

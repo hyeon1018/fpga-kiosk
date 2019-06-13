@@ -159,8 +159,35 @@ begin
 					when x"11" => text_data <= "010001";
 					when x"12" => text_data <= "011010";
 					when x"13" => text_data <= "100000";
+					--use coupon
+					when x"6B" => text_data <= "100001";
+					when x"6C" => text_data <= "011111";
+					when x"6D" => text_data <= "010001";
+					when x"6E" => text_data <= "000000";
+					when x"6F" => text_data <= "001111";
+					when x"70" => text_data <= "011011";
+					when x"71" => text_data <= "100001";
+					when x"72" => text_data <= "011100";
+					when x"73" => text_data <= "011011";
+					when x"74" => text_data <= "011010";
+					--with dip switch
+					when x"88" => text_data <= "100011";
+					when x"89" => text_data <= "010101";
+					when x"8A" => text_data <= "100000";
+					when x"8B" => text_data <= "010100";
+					when x"8C" => text_data <= "000000";
+					when x"8D" => text_data <= "010000";
+					when x"8E" => text_data <= "010101";
+					when x"8F" => text_data <= "011100";
+					when x"90" => text_data <= "000000";
+					when x"91" => text_data <= "011111";
+					when x"92" => text_data <= "100011";
+					when x"93" => text_data <= "010101";
+					when x"94" => text_data <= "100000";
+					when x"95" => text_data <= "001111";
+					when x"96" => text_data <= "010100";
 					when others => text_data <= "000000";
-					--use coupon with dip switch
+					
 				end case;
 			elsif state = "110" then
 				case text_addr is

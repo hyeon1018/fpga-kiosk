@@ -70,31 +70,31 @@ begin
 		x"334333" when menu_bit(9) = '1' else
 		x"333333";
 	submenu_price(1) <=
-		x"333334" when menu_bit(8) = '1' else
+		x"334333" when menu_bit(8) = '1' else
 		x"333333";
 	submenu_price(2) <=
-		x"333335" when menu_bit(7) = '1' else
+		x"336333" when menu_bit(7) = '1' else
 		x"333333";
 	submenu_price(3) <=
-		x"333336" when menu_bit(6) = '1' else
+		x"335333" when menu_bit(6) = '1' else
 		x"333333";
 	submenu_price(4) <=
-		x"333337" when menu_bit(5) = '1' else
+		x"335833" when menu_bit(5) = '1' else
 		x"333333";
 	submenu_price(5) <=
-		x"333338" when menu_bit(4) = '1' else
+		x"334833" when menu_bit(4) = '1' else
 		x"333333";
 	submenu_price(6) <=
-		x"333339" when menu_bit(3) = '1' else
+		x"334333" when menu_bit(3) = '1' else
 		x"333333";
 	submenu_price(7) <=
-		x"33333A" when menu_bit(2) = '1' else
+		x"335633" when menu_bit(2) = '1' else
 		x"333333";
 	submenu_price(8) <=
-		x"333342" when menu_bit(1) = '1' else
+		x"334333" when menu_bit(1) = '1' else
 		x"333333";
 	submenu_price(9) <=
-		x"333344" when menu_bit(0) = '1' else
+		x"335833" when menu_bit(0) = '1' else
 		x"333333";
 		
 	sum_gen : for K in 0 to 8 generate

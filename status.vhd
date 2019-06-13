@@ -61,7 +61,7 @@ signal sel_rst, sel_rst_1, sel_rst_2 : STD_LOGIC;
 signal current_select, next_select : STD_LOGIC_VECTOR (3 downto 0);
 signal max_selected_t : STD_LOGIC_VECTOR(3 downto 0);
 
-signal del1, del2, del3, del4, del5, del6, del7, del8: STD_LOGIC;
+signal del1, del2, del3, del4, del5, del6, del7, del8, del9, del10 : STD_LOGIC;
 signal s001_1, s001_2 :STD_LOGIC;
 signal mem_load_en_t : STD_LOGIC;
 	
@@ -106,8 +106,6 @@ begin
 				when "001" =>
 					if key_data = x"5" or key_data = x"6" then
 						next_state <= "010";
-					elsif key_data = x"4" then
-						next_state <= "000";
 					end if;
 				when "010" =>
 					if key_data = x"6" then
@@ -175,6 +173,8 @@ begin
 	DELAY_DEL : process(clk)
 	begin
 		if rising_edge(clk) then
+			del10 <= del9;
+			del9 <= del8;
 			del8 <= del7;
 			del7 <= del6;
 			del6 <= del5;
@@ -217,7 +217,7 @@ begin
 	
 	mem_load_en <= mem_load_en_t;
 	
-	mem_del_en <= del8;
+	mem_del_en <= del10;
 	
 	order_reg_rst <= s001_1 and not s001_2;
 	
@@ -230,9 +230,9 @@ begin
 		'1' when current_state = "010" else
 		'0';
 	
-	subtotal_en <= del6 or mem_load_en_t;
+	subtotal_en <= del9 or mem_load_en_t;
 	
-	subtotal_op <= del1 or del2 or del3 or del4 or del5 or del6 or del7 or del8;
+	subtotal_op <= del1 or del2 or del3 or del4 or del5 or del6 or del7 or del8 or del9 or del10;
 	
 	discount_en <=
 		'1' when current_state = "101" else
